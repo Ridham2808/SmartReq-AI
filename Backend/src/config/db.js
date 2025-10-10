@@ -1,35 +1,22 @@
-// Database configuration stub
-// Prisma client will be initialized here
+import { PrismaClient } from '@prisma/client'
 
-export const prisma = {
-  // Placeholder - will be replaced with actual Prisma client
-  user: {
-    findUnique: async () => null,
-    findMany: async () => [],
-    create: async () => null,
-    update: async () => null,
-    delete: async () => null
-  },
-  project: {
-    findUnique: async () => null,
-    findMany: async () => [],
-    create: async () => null,
-    update: async () => null,
-    delete: async () => null
-  },
-  input: {
-    findUnique: async () => null,
-    findMany: async () => [],
-    create: async () => null,
-    delete: async () => null
-  },
-  artifact: {
-    findUnique: async () => null,
-    findMany: async () => [],
-    create: async () => null,
-    update: async () => null,
-    delete: async () => null
-  }
-}
+const prisma = new PrismaClient({
+  log: ['query', 'info', 'warn', 'error'],
+})
+
+// Handle graceful shutdown
+process.on('beforeExit', async () => {
+  await prisma.$disconnect()
+})
+
+process.on('SIGINT', async () => {
+  await prisma.$disconnect()
+  process.exit(0)
+})
+
+process.on('SIGTERM', async () => {
+  await prisma.$disconnect()
+  process.exit(0)
+})
 
 export default prisma

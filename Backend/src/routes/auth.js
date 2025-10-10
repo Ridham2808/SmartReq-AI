@@ -1,29 +1,16 @@
 import { Router } from 'express'
+import { register, login, getMe } from '../controllers/auth.js'
+import { authenticateToken } from '../middleware/auth.js'
 
 const router = Router()
 
 // POST /api/auth/register
-router.post('/register', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Register endpoint (to be implemented)'
-  })
-})
+router.post('/register', register)
 
 // POST /api/auth/login
-router.post('/login', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Login endpoint (to be implemented)'
-  })
-})
+router.post('/login', login)
 
 // GET /api/auth/me (Protected)
-router.get('/me', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Get user profile (to be implemented)'
-  })
-})
+router.get('/me', authenticateToken, getMe)
 
 export default router
