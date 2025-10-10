@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { authenticateToken } from '../middleware/auth.js'
+import { createProject, getProjects, getProject, updateProject, deleteProject } from '../controllers/projects.js'
 
 const router = Router()
 
@@ -7,44 +8,18 @@ const router = Router()
 router.use(authenticateToken)
 
 // POST /api/projects
-router.post('/', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Create project (to be implemented)'
-  })
-})
+router.post('/', createProject)
 
 // GET /api/projects
-router.get('/', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Get all projects (to be implemented)',
-    data: []
-  })
-})
+router.get('/', getProjects)
 
 // GET /api/projects/:id
-router.get('/:id', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Get project by ID (to be implemented)'
-  })
-})
+router.get('/:id', getProject)
 
 // PUT /api/projects/:id
-router.put('/:id', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Update project (to be implemented)'
-  })
-})
+router.put('/:id', updateProject)
 
 // DELETE /api/projects/:id
-router.delete('/:id', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Delete project (to be implemented)'
-  })
-})
+router.delete('/:id', deleteProject)
 
 export default router
