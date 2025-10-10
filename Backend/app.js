@@ -10,10 +10,19 @@ import { errorHandler, notFound } from './src/middleware/errorHandler.js'
 
 const app = express()
 
+// Security middleware
 app.use(helmet())
-app.use(cors({ origin: config.CORS_ORIGIN }))
+app.use(cors({ 
+  origin: config.CORS_ORIGIN,
+  credentials: true 
+}))
+
+// Body parsing
 app.use(express.json({ limit: '2mb' }))
-app.use(morgan('dev'))
+app.use(express.urlencoded({ extended: true, limit: '2mb' }))
+
+// Logging
+app.use(morgan(config.NODE_ENV === 'production' ? 'combined' : 'dev'))
 
 app.use('/health', healthRouter)
 app.use('/api', apiRouter)
@@ -21,7 +30,7 @@ app.use('/api', apiRouter)
 app.get('/', (req, res) => {
   res.json({ 
     ok: true, 
-    service: 'smartreq-ai-backend',
+    service: 'smartreq-ai-backend-skeleton',
     version: '1.0.0',
     documentation: '/api/docs'
   })
