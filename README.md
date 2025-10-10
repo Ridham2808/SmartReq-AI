@@ -1,4 +1,4 @@
-# SmartReq-AI (Hackathon Starter)
+# SmartReq-AI 
 
 A lightweight AI-assisted tool to generate high-quality software requirements from raw inputs (text, files, and chat). Built for rapid prototyping during the hackathon—minimal setup, fast iteration.
 
@@ -15,3 +15,13 @@ A lightweight AI-assisted tool to generate high-quality software requirements fr
 ## Monorepo Layout
 - Frontend: SmartReq-AI/
 - Backend: SmartReq-AI-Backend/
+
+
+Team Name: Syntax Sorcery
+
+Team Members:
+
+🧑‍💻 Aditya Raulji 
+🧑‍💻 Ridham Patel 
+🧑‍💻 Rijans Patoliya 
+🧑‍💻 Yasar Khan 
