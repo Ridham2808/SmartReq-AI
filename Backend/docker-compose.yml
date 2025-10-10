@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: smartreq-postgres
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-smartreq_ai}
+      POSTGRES_USER: ${POSTGRES_USER:-smartreq_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-smartreq_password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - smartreq-network
+
+  # SmartReq AI Backend
+  backend:
+    build: .
+    container_name: smartreq-backend
+    env_file:
+      - .env
+    ports:
+      - "${PORT:-5000}:${PORT:-5000}"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+    depends_on:
+      - postgres
+    networks:
+      - smartreq-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  smartreq-network:
+    driver: bridge
