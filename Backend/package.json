@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "nodemon app.js",
     "start": "node app.js",
+    "setup": "node setup.js",
     "test": "echo \"Tests to be implemented\" && exit 0",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
