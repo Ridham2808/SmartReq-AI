@@ -1,0 +1,60 @@
+// Prisma schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  name      String
+  email     String    @unique
+  password  String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  projects  Project[]
+
+  @@map("users")
+}
+
+model Project {
+  id          Int        @id @default(autoincrement())
+  name        String
+  description String?
+  ownerId     Int
+  owner       User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  inputs      Input[]
+  artifacts   Artifact[]
+
+  @@map("projects")
+}
+
+model Input {
+  id        Int      @id @default(autoincrement())
+  projectId Int
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  type      String   // 'text', 'voice', 'document'
+  content   String?  // For text or processed text
+  filePath  String?  // For uploaded files
+  createdAt DateTime @default(now())
+
+  @@map("inputs")
+}
+
+model Artifact {
+  id        Int      @id @default(autoincrement())
+  projectId Int
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  type      String   // 'story', 'flow'
+  content   Json     // For flow or string for story
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("artifacts")
+}
