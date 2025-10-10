@@ -1,7 +1,11 @@
-export const authenticateToken = (req, res, next) => {
+import jwt from 'jsonwebtoken'
+import { config } from '../config/env.js'
+import prisma from '../config/db.js'
+
+export const authenticateToken = async (req, res, next) => {
   try {
     const authHeader = req.headers['authorization']
-    const token = authHeader && authHeader.split(' ')[1]
+    const token = authHeader && authHeader.split(' ')[1] // Bearer TOKEN
 
     if (!token) {
       return res.status(401).json({
@@ -10,13 +14,52 @@ export const authenticateToken = (req, res, next) => {
       })
     }
 
-    // Token verification will be implemented when JWT is added
-    req.user = { id: 1 } // Placeholder
+    const decoded = jwt.verify(token, config.JWT_SECRET)
+    
+    // Verify user still exists
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: { id: true, name: true, email: true }
+    })
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'User not found'
+      })
+    }
+
+    req.user = user
     next()
   } catch (error) {
-    return res.status(401).json({
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid token'
+      })
+    }
+    
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        success: false,
+        message: 'Token expired'
+      })
+    }
+
+    console.error('Auth middleware error:', error)
+    return res.status(500).json({
       success: false,
-      message: 'Invalid token'
+      message: 'Authentication error'
     })
   }
+}
+
+export const generateToken = (userId, customExpiry = null) => {
+  const expiresIn = customExpiry || config.JWT_EXPIRES_IN
+  
+  return jwt.sign(
+    { userId },
+    config.JWT_SECRET,
+    { expiresIn: expiresIn }
+  )
 }
