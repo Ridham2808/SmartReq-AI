@@ -71,6 +71,72 @@ export default function FeaturesPage(){
         </motion.div>
       </section>
 
+      {/* Demo */}
+      <section id="demo" className="mt-10 sm:mt-16">
+        <div className="aspect-video w-full rounded-xl overflow-hidden border bg-black">
+          <iframe 
+            className="w-full h-full"
+            src="https://www.youtube.com/embed/dQw4w9WgXcQ" 
+            title="SmartReq AI Demo" 
+            frameBorder="0" 
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+            allowFullScreen
+          />
+        </div>
+      </section>
+
+      {/* Section 1: Core Features – 2x2 grid */}
+      <section className="mt-12 sm:mt-16">
+        <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight mb-3">Core Features – Multi-Modal Inputs & Instant Magic</h2>
+        <p className="text-gray-700 leading-relaxed mb-6">SmartReq AI’s core NLP engine is highly versatile. Whether you dictate by voice or upload complex PDFs, it deeply analyzes everything. Specially tuned for FinTech, it automatically detects security and compliance requirements. Below are 4 key features that will transform your workflow.</p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+          <FeatureCard icon={<MdMic />} title="Voice, Text, and Documents — Handle It All"
+            desc="NLP-powered analysis that extracts requirements whether you type text, dictate by voice, or upload PDFs. In FinTech, it parses voice inputs like 'Secure 2FA login with fraud check' and identifies entities."
+            bullets={[
+              'Voice: Real-time transcription via Browser SpeechRecognition.',
+              'Text: Paste emails/docs – OCR for scanned files.',
+              'Docs: PDF/Word parse with pdf-parse, chunk long docs for deep analysis.'
+            ]}
+            fintech="For a banking app, record stakeholder meetings — AI detects mood and analyzes sentiment (positive/negative feedback)."
+            benefit="No more manual notes – 30% faster input gathering (Source: EPAM AI in Fintech Report)."
+          />
+
+          <FeatureCard icon={<MdFlashOn />} title="User Stories & Process Flows — In One Click"
+            desc="Analyze inputs with OpenAI GPT‑4o to generate 5–10 Gherkin stories. Also produces a deep JSON flow with 10–20 nodes for React Flow visualization."
+            bullets={[
+              'Stories: Full Given-When-Then, fintech compliance nodes.',
+              'Flows: Hierarchical, color-coded (green success, red error).',
+              'Speed: <3s simple inputs, streaming for partial results.'
+            ]}
+            fintech="Loan approval with KYC: Start -> KYC Verify -> Credit Score Check -> Approve/Deny."
+            benefit="Reduces errors by 40% (Source: Apriorit Fintech Automation Guide)."
+          />
+
+          <FeatureCard icon={<MdEdit />} title="Drag-and-Drop Flows — Collaborate in Real Time"
+            desc="Interactive diagrams with React Flow; drag, edit, and zoom nodes. Team collaboration via Socket.io – changes sync instantly. Dagre auto-layout."
+            bullets={[
+              'Interactivity: Add/delete nodes, tooltips with descriptions.',
+              'Hierarchy: Groups for sub-flows like 2FA.',
+              "Collab: Emit 'flow-update', multi-user editing."
+            ]}
+            fintech="Edit the decision node in a fraud-detection flow ('If IP suspicious?') – OpenAI re-validates with suggestions."
+            benefit="Enhances collaboration, 25% better stakeholder buy-in (Source: IBM Collaboration Tools Study)."
+          />
+
+          <FeatureCard icon={<MdSync />} title="Jira, CRM, ERP — Sync Everything"
+            desc="Push stories to Jira via API, pull data from ERPs for custom flows. RegTech compliance auto-check."
+            bullets={[
+              'Jira: Create issues from stories, sync flows as attachments.',
+              'Others: CRM (Salesforce), ERP for finance rules.',
+              'Compliance: AI monitors regs changes in real-time.'
+            ]}
+            fintech="Convert generated stories into Jira tickets – auto-assign to devs and track progress."
+            benefit="Smooth workflows, 20% faster project kickoff (Source: EPAM Integration Best Practices)."
+          />
+        </div>
+      </section>
+
       {/* Section 2: Advanced AI Automation Features */}
       <section className="mt-12 sm:mt-16">
         <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight mb-3">Advanced AI Automation Features</h2>
@@ -110,7 +176,45 @@ export default function FeaturesPage(){
         </div>
       </section>
 
-  
+      {/* Section 3: Best Practices Integration */}
+      <section className="mt-12 sm:mt-16">
+        <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight mb-3">Best Practices Integration</h2>
+        <p className="text-gray-700 leading-relaxed mb-6">SmartReq AI is not just a tool; it’s a companion for best practices. It amplifies proven methods with AI to ensure ethical and scalable adoption.</p>
+
+        <div className="divide-y rounded-xl border overflow-hidden">
+          <AccordionItem title="Start Small & Scale" desc="Focus on repetitive tasks — requirement elicitation. Pilot with one project, then auto‑scale to the enterprise.">
+            <Tips items={[
+              'Identify high‑impact processes (e.g., KYC requirements).',
+              'Measure ROI with built‑in analytics.'
+            ]} />
+          </AccordionItem>
+          <AccordionItem title="Data Quality First" desc="Clean data for AI — validate inputs and anonymize PII.">
+            <Tips items={[
+              'Integrate with existing tools.',
+              'Phased rollout for smooth adoption.'
+            ]} />
+          </AccordionItem>
+          <AccordionItem title="Ethical AI & Upskilling" desc="Bias‑free flows and team training modules.">
+            <Tips items={[
+              'Explainable AI (SHAP for decisions).',
+              'Reskill BAs for AI oversight.'
+            ]} />
+          </AccordionItem>
+          <AccordionItem title="Monitor & Optimize" desc="Real‑time metrics — flow accuracy score.">
+            <Tips items={[
+              'Use AI for sentiment analysis on feedback.',
+              'Auto‑optimize prompts based on usage.'
+            ]} />
+          </AccordionItem>
+          <AccordionItem title="Collaborate Cross-Team" desc="Real-time edits with Socket.io.">
+            <Tips items={[
+              'AI for summarizing meetings.',
+              'Draft presentations from stories.'
+            ]} />
+          </AccordionItem>
+        </div>
+      </section>
+
       {/* Section 4: Why Fintech Teams Love It */}
       <section className="mt-12 sm:mt-16">
         <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight mb-3">Why Fintech Teams Love It</h2>
@@ -131,4 +235,97 @@ export default function FeaturesPage(){
   )
 }
 
+function FlowNode({ x, y, label, success }){
+  const style = { left: x, top: y, position: 'absolute', transform: 'translate(-50%, -50%)' }
+  const base = 'px-3 py-2 rounded-md text-xs font-medium border'
+  const variant = success ? ' bg-green-500 text-white border-green-600' : ' bg-white text-gray-800 border-gray-300'
+  return (
+    <div className={base + variant} style={style}>
+      {label}
+    </div>
+  )
+}
+
+function Connector({ from, to }){
+  const [fx, fy] = from.split(',').map(v => parseFloat(v))
+  const [tx, ty] = to.split(',').map(v => parseFloat(v))
+  const x1 = `${fx}%`; const y1 = `${fy}%`
+  const x2 = `${tx}%`; const y2 = `${ty}%`
+  return (
+    <svg className="absolute inset-0 w-full h-full pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto" markerUnits="strokeWidth">
+          <path d="M0,0 L0,6 L6,3 z" fill="#4b5563" />
+        </marker>
+      </defs>
+      <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#4b5563" strokeWidth="1.5" markerEnd="url(#arrow)" />
+    </svg>
+  )
+}
+
+function FeatureCard({ icon, title, desc, bullets, fintech, benefit }){
+  return (
+    <div className="rounded-xl border p-6 hover:shadow-lg transition-all duration-300 hover:scale-[1.02] bg-white">
+      <div className="flex items-center gap-3 mb-3 text-black">
+        <div className="w-9 h-9 rounded-md bg-gray-100 grid place-content-center text-xl">{icon}</div>
+        <h3 className="text-lg font-semibold leading-tight">{title}</h3>
+      </div>
+      <p className="text-gray-700 leading-relaxed mb-3">{desc}</p>
+      <ul className="list-disc pl-5 space-y-1 text-gray-700 mb-3">
+        {bullets?.map(b => <li key={b}>{b}</li>)}
+      </ul>
+      {fintech ? <p className="text-gray-800 mb-2"><span className="font-semibold">Fintech Example:</span> {fintech}</p> : null}
+      {benefit ? <p className="text-gray-600 text-sm">{benefit}</p> : null}
+    </div>
+  )
+}
+
+function AdvCard({ icon, title, desc, stat, usecase }){
+  return (
+    <div className="rounded-xl border p-6 bg-white hover:shadow-lg transition-all">
+      <div className="flex items-center gap-3 mb-3">
+        <div className="w-9 h-9 rounded-md bg-gray-100 grid place-content-center text-xl">{icon}</div>
+        <h3 className="text-lg font-semibold leading-tight">{title}</h3>
+      </div>
+      <p className="text-gray-700 leading-relaxed mb-2">{desc}</p>
+      {usecase ? <p className="text-gray-800 mb-1"><span className="font-semibold">Use Case:</span> {usecase}</p> : null}
+      {stat ? <p className="text-gray-600 text-sm">{stat}</p> : null}
+    </div>
+  )
+}
+
+function AccordionItem({ title, desc, children }){
+  return (
+    <details className="group">
+      <summary className="cursor-pointer select-none p-5 bg-white hover:bg-gray-50 flex items-center justify-between">
+        <div>
+          <h4 className="text-base font-semibold">{title}</h4>
+          <p className="text-sm text-gray-600">{desc}</p>
+        </div>
+        <MdArrowOutward className="opacity-60 group-open:rotate-45 transition-transform" />
+      </summary>
+      <div className="p-5 bg-white">
+        {children}
+      </div>
+    </details>
+  )
+}
+
+function Tips({ items }){
+  return (
+    <ul className="list-disc pl-5 space-y-1 text-gray-700">
+      {items?.map(t => <li key={t}>{t}</li>)}
+    </ul>
+  )
+}
+
+function StatCard({ value, label, source }){
+  return (
+    <div className="rounded-xl border p-6 bg-white text-center">
+      <div className="text-4xl font-extrabold tracking-tight">{value}</div>
+      <div className="text-gray-800 mt-1">{label}</div>
+      <div className="text-sm text-gray-600 mt-1">Source: {source}</div>
+    </div>
+  )
+}
 
