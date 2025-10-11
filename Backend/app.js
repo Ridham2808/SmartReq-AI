@@ -124,13 +124,26 @@ app.use((req, res, next) => {
 
 app.use('/health', healthRouter)
 app.use('/api', apiRouter)
+app.use('/v1', apiRouter) // API versioning support
 
 app.get('/', (req, res) => {
   res.json({ 
     ok: true, 
-    service: 'smartreq-ai-backend-skeleton',
+    service: 'smartreq-ai-backend',
     version: '1.0.0',
-    documentation: '/api/docs'
+    apiVersion: 'v1',
+    documentation: '/api/docs',
+    health: '/api/health',
+    features: [
+      'JWT Authentication',
+      'Real-time collaboration',
+      'AI-powered generation',
+      'Jira integration',
+      'Email notifications',
+      'File upload support',
+      'Rate limiting',
+      'Comprehensive logging'
+    ]
   })
 })
 
@@ -168,28 +181,47 @@ startServer()
 
 // Graceful shutdown
 const gracefulShutdown = (signal) => {
-  console.log(`\n${signal} received. Starting graceful shutdown...`)
+  logger.info(`Received ${signal}. Starting graceful shutdown...`);
   
   // Close Socket.IO server
   io.close(() => {
-    console.log('Socket.IO server closed')
+    logger.info('Socket.IO server closed');
   });
   
   // Close HTTP server
   server.close(() => {
-    console.log('HTTP server closed')
+    logger.info('HTTP server closed');
   });
   
+  // Disconnect from database
   prisma.$disconnect()
     .then(() => {
-      console.log('Database disconnected')
-      process.exit(0)
+      logger.info('Database disconnected');
+      process.exit(0);
     })
     .catch((error) => {
-      console.error('Error during shutdown:', error)
-      process.exit(1)
-    })
-}
+      logger.error('Error during shutdown:', error);
+      process.exit(1);
+    });
+  
+  // Force close after 10 seconds
+  setTimeout(() => {
+    logger.error('Could not close connections in time, forcefully shutting down');
+    process.exit(1);
+  }, 10000);
+};
 
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'))
 process.on('SIGINT', () => gracefulShutdown('SIGINT'))
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+  logger.error('Uncaught Exception:', error);
+  process.exit(1);
+});
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+  logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
+});
