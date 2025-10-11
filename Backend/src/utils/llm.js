@@ -1,96 +1,116 @@
-import { config } from '../config/env.js'
+const config = require('../config/env')
 
-// Mock LLM service - will be replaced with actual OpenAI/Gemini integration
-export const generateUserStories = async (requirements) => {
+async function callOpenAI(prompt) {
+  const apiKey = config.OPENAI_API_KEY
+  if (!apiKey) throw new Error('OPENAI_API_KEY missing')
+  // Let OpenAI choose a suitable model server-side if not specified; fallback to a broadly available one
+  const model = process.env.OPENAI_MODEL || 'gpt-4o-mini'
+  
+  // Create AbortController for timeout
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 25000) // 25 second timeout
+  
   try {
-    console.log('Generating user stories for:', requirements)
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model,
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.2,
+        max_tokens: 2000 // Limit response size for faster generation
+      }),
+      signal: controller.signal
+    })
     
-    // Simulate AI processing
-    const stories = [
-      {
-        title: 'User Registration',
-        description: 'As a user, I want to register an account so that I can access the system',
-        acceptanceCriteria: [
-          'User can enter email and password',
-          'System validates email format',
-          'User receives confirmation email'
-        ]
-      }
-    ]
-
-    return {
-      success: true,
-      stories
-    }
+    clearTimeout(timeoutId)
+    
+    if (!res.ok) throw new Error(`OpenAI error ${res.status}`)
+    const json = await res.json()
+    return json.choices?.[0]?.message?.content || ''
   } catch (error) {
-    console.error('Generate user stories error:', error)
+    clearTimeout(timeoutId)
+    if (error.name === 'AbortError') {
+      throw new Error('OpenAI request timed out')
+    }
     throw error
   }
 }
 
-export const generateProcessFlow = async (requirements) => {
+async function callGemini(prompt) {
+  const apiKey = config.GEMINI_API_KEY
+  if (!apiKey) throw new Error('GEMINI_API_KEY missing')
+  const model = process.env.GEMINI_MODEL || 'gemini-1.5-flash'
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
+  
+  // Create AbortController for timeout
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 25000) // 25 second timeout
+  
   try {
-    console.log('Generating process flow for:', requirements)
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          maxOutputTokens: 2000 // Limit response size for faster generation
+        }
+      }),
+      signal: controller.signal
+    })
     
-    // Simulate AI processing
-    const flow = {
-      nodes: [
-        { id: '1', label: 'Start', type: 'start' },
-        { id: '2', label: 'User Input', type: 'process' },
-        { id: '3', label: 'End', type: 'end' }
-      ],
-      edges: [
-        { source: '1', target: '2' },
-        { source: '2', target: '3' }
-      ]
-    }
-
-    return {
-      success: true,
-      flow
-    }
+    clearTimeout(timeoutId)
+    
+    if (!res.ok) throw new Error(`Gemini error ${res.status}`)
+    const json = await res.json()
+    return json.candidates?.[0]?.content?.parts?.map(p => p.text).join('') || ''
   } catch (error) {
-    console.error('Generate process flow error:', error)
+    clearTimeout(timeoutId)
+    if (error.name === 'AbortError') {
+      throw new Error('Gemini request timed out')
+    }
     throw error
   }
 }
 
-export const chatWithAI = async (message, context = []) => {
-  try {
-    console.log('Chat with AI:', message)
-    
-    // Simulate AI response
-    const response = `I understand you're asking about: "${message}". How can I help you further with your requirements?`
-
-    return {
-      success: true,
-      response
-    }
-  } catch (error) {
-    console.error('Chat with AI error:', error)
-    throw error
+async function generateArtifactsFromText(text) {
+  const systemPrompt = `You are SmartReq AI. From the given requirements text, return STRICT JSON:
+{
+  "userStories": [{ "id": number, "content": string }],
+  "flow": {
+    "nodes": [{ "id": string, "type": "custom", "position": { "x": number, "y": number }, "data": { "label": string, "type": "start"|"process"|"end" }}],
+    "edges": [{ "id": string, "source": string, "target": string, "type": "smoothstep" }]
   }
 }
+Rules:
+- Generate 5-8 concise user stories
+- Create 6-10 flow nodes with simple positions
+- Keep JSON minimal for speed
+- Return ONLY JSON, no other text.`
+  const userPrompt = `TEXT:\n\n${text}\n\nReturn ONLY JSON.`
+  const prompt = `${systemPrompt}\n\n${userPrompt}`
 
-export const extractRequirements = async (text) => {
-  try {
-    console.log('Extracting requirements from text')
-    
-    // Simulate requirement extraction
-    const requirements = [
-      {
-        type: 'functional',
-        description: 'System shall allow user authentication',
-        priority: 'high'
-      }
-    ]
-
-    return {
-      success: true,
-      requirements
-    }
-  } catch (error) {
-    console.error('Extract requirements error:', error)
-    throw error
+  let content = ''
+  // Prefer OpenAI if available, fallback to Gemini
+  if (config.OPENAI_API_KEY) {
+    content = await callOpenAI(prompt)
+  } else if (config.GEMINI_API_KEY) {
+    content = await callGemini(prompt)
+  } else {
+    throw new Error('No LLM API keys available')
   }
+
+  // Extract JSON safely
+  const start = content.indexOf('{')
+  const end = content.lastIndexOf('}')
+  if (start === -1 || end === -1) throw new Error('LLM did not return JSON')
+  const jsonStr = content.slice(start, end + 1)
+  return JSON.parse(jsonStr)
 }
+
+module.exports = { generateArtifactsFromText }
+
