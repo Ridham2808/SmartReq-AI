@@ -5,7 +5,7 @@ FROM node:18-alpine
 WORKDIR /app
 
 # Install Python and pip
-RUN apk add --no-cache python3 py3-pip python3-venv
+RUN apk add --no-cache python3 py3-pip
 
 # Copy package files
 COPY package*.json ./
@@ -13,16 +13,12 @@ COPY package*.json ./
 # Install Node.js dependencies
 RUN npm ci --only=production
 
-# Create Python virtual environment
-RUN python3 -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
-
 # Copy Python requirements and install
 COPY python/requirements.txt ./python/
-RUN pip install -r python/requirements.txt
+RUN pip3 install -r python/requirements.txt
 
 # Download spaCy model
-RUN python -m spacy download en_core_web_sm
+RUN python3 -m spacy download en_core_web_sm
 
 # Copy source code
 COPY . .
