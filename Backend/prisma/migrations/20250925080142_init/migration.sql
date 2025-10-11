@@ -1,4 +1,4 @@
-git commit -m "feat: add Prisma migration lock for PostgreSQL provider"
+
 CREATE TYPE "InputType" AS ENUM ('text', 'voice', 'document');
 
 -- CreateEnum
