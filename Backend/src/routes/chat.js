@@ -1,14 +1,14 @@
-import { Router } from 'express'
-import { authenticateToken } from '../middleware/auth.js'
-import { chatHandler } from '../controllers/chat.js'
-import { validateRequest, chatSchema } from '../middleware/validation.js'
+const express = require('express');
+const router = express.Router();
+const { chatHandler } = require('../controllers/chat');
+const { authenticateToken } = require('../middleware/auth');
 
-const router = Router()
-
-// Protected route
-router.use(authenticateToken)
+// Optional auth; protect if required
+router.use(authenticateToken);
 
 // POST /api/chat
-router.post('/', validateRequest(chatSchema), chatHandler)
+router.post('/', chatHandler);
 
-export default router
+module.exports = router;
+
+
