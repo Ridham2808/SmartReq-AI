@@ -5,12 +5,10 @@ services:
   postgres:
     image: postgres:15-alpine
     container_name: smartreq-postgres
-    env_file:
-      - .env
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-smartreq_ai}
-      POSTGRES_USER: ${POSTGRES_USER:-smartreq_user}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-smartreq_password}
+      POSTGRES_DB: smartreq_ai
+      POSTGRES_USER: smartreq_user
+      POSTGRES_PASSWORD: smartreq_password
     ports:
       - "5432:5432"
     volumes:
@@ -22,10 +20,21 @@ services:
   backend:
     build: .
     container_name: smartreq-backend
-    env_file:
-      - .env
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      DATABASE_URL: postgresql://smartreq_user:smartreq_password@postgres:5432/smartreq_ai
+      JWT_SECRET: your-super-secret-jwt-key-change-in-production
+      JWT_EXPIRES_IN: 7d
+      UPLOAD_DIR: uploads
+      MAX_FILE_SIZE: 10485760
+      RATE_LIMIT_WINDOW_MS: 900000
+      RATE_LIMIT_MAX: 100
+      CORS_ORIGIN: http://localhost:3000
+      PYTHON_SCRIPT_PATH: ./python/nlp_script.py
+      JIRA_ENCRYPTION_KEY: your-jira-encryption-key
     ports:
-      - "${PORT:-5000}:${PORT:-5000}"
+      - "5000:5000"
     volumes:
       - ./uploads:/app/uploads
       - ./logs:/app/logs
@@ -35,8 +44,21 @@ services:
       - smartreq-network
     restart: unless-stopped
 
+  # Redis for caching (optional)
+  redis:
+    image: redis:7-alpine
+    container_name: smartreq-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - smartreq-network
+    restart: unless-stopped
+
 volumes:
   postgres_data:
+  redis_data:
 
 networks:
   smartreq-network:
