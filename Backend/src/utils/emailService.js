@@ -8,11 +8,11 @@ const generateVerificationCode = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-// Send verification email via SendGrid
+// Send verification email via SendGrid with fallback
 const sendVerificationEmail = async (email, name, verificationCode) => {
   try {
     const apiKey = process.env.SENDGRID_API_KEY;
-    const sender = process.env.SENDER_EMAIL || config.EMAIL_FROM;
+    const sender = (process.env.SENDER_EMAIL || config.EMAIL_FROM).trim(); // Trim whitespace
 
     if (!apiKey) throw new Error('SENDGRID_API_KEY is not configured');
     if (!sender) throw new Error('SENDER_EMAIL is not configured');
@@ -78,8 +78,19 @@ const sendVerificationEmail = async (email, name, verificationCode) => {
     logger.info(`Verification email sent to ${email} via SendGrid (inline HTML). Status: ${response.statusCode}`);
     return { success: true, provider: 'SendGrid', statusCode: response.statusCode };
   } catch (error) {
-    logger.error(`Failed to send verification email to ${email}:`, error.message);
-    throw new Error(`Failed to send verification email: ${error.message}`);
+    logger.error(`Failed to send verification email to ${email} via SendGrid:`, error.message);
+    
+    // Fallback to console logging if SendGrid fails
+    logger.info('Attempting fallback email service...');
+    try {
+      const { sendEmailViaWebhook } = require('./emailWebhook');
+      const result = await sendEmailViaWebhook(email, name, verificationCode, 'verification');
+      logger.info(`Fallback email service successful for ${email}`);
+      return result;
+    } catch (fallbackError) {
+      logger.error('Both SendGrid and fallback email services failed:', fallbackError.message);
+      throw new Error(`Failed to send verification email: ${error.message}`);
+    }
   }
 };
 
@@ -87,7 +98,7 @@ const sendVerificationEmail = async (email, name, verificationCode) => {
 const sendPasswordResetEmail = async (email, name, resetCode) => {
   try {
     const apiKey = process.env.SENDGRID_API_KEY;
-    const sender = process.env.SENDER_EMAIL || config.EMAIL_FROM;
+    const sender = (process.env.SENDER_EMAIL || config.EMAIL_FROM).trim(); // Trim whitespace
 
     if (!apiKey) throw new Error('SENDGRID_API_KEY is not configured');
     if (!sender) throw new Error('SENDER_EMAIL is not configured');
@@ -151,8 +162,19 @@ const sendPasswordResetEmail = async (email, name, resetCode) => {
     logger.info(`Password reset email sent to ${email} via SendGrid (inline HTML). Status: ${response.statusCode}`);
     return { success: true, provider: 'SendGrid', statusCode: response.statusCode };
   } catch (error) {
-    logger.error(`Failed to send password reset email to ${email}:`, error.message);
-    throw new Error(`Failed to send password reset email: ${error.message}`);
+    logger.error(`Failed to send password reset email to ${email} via SendGrid:`, error.message);
+    
+    // Fallback to console logging if SendGrid fails
+    logger.info('Attempting fallback email service for password reset...');
+    try {
+      const { sendEmailViaWebhook } = require('./emailWebhook');
+      const result = await sendEmailViaWebhook(email, name, resetCode, 'password-reset');
+      logger.info(`Fallback email service successful for password reset to ${email}`);
+      return result;
+    } catch (fallbackError) {
+      logger.error('Both SendGrid and fallback email services failed for password reset:', fallbackError.message);
+      throw new Error(`Failed to send password reset email: ${error.message}`);
+    }
   }
 };
 
