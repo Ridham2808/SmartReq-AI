@@ -13,6 +13,13 @@ const generateRoutes = require('./generate');
 const artifactRoutes = require('./artifacts');
 const integrateRoutes = require('./integrate');
 const chatRoutes = require('./chat');
+const demoRequestRoutes = require('./demoRequests');
+const trialRequestRoutes = require('./trialRequests');
+const emailCaptureRoutes = require('./emailCaptures');
+const userProfileRoutes = require('./userProfile');
+const foresightRoutes = require('./foresight');
+const refinementRoutes = require('./refinement');
+const inputHistoryRoutes = require('./inputHistory');
 const net = require('net');
 
 // Enhanced health check endpoint
@@ -207,7 +214,18 @@ router.get('/docs', (req, res) => {
       auth: {
         'POST /api/auth/register': 'Register a new user',
         'POST /api/auth/login': 'Login user',
-        'GET /api/auth/me': 'Get current user profile (Protected)'
+        'GET /api/auth/me': 'Get current user profile (Protected)',
+        'PUT /api/auth/profile': 'Update user profile (Protected)',
+        'POST /api/auth/verify-email': 'Verify user email',
+        'POST /api/auth/resend-verification': 'Resend verification email',
+        'POST /api/auth/forgot-password': 'Request password reset',
+        'POST /api/auth/reset-password': 'Reset password with code'
+      },
+      user: {
+        'GET /api/user/profile': 'Get user profile (Protected)',
+        'PUT /api/user/profile': 'Update user profile (Protected)',
+        'PUT /api/user/last-login': 'Update last login time (Protected)',
+        'DELETE /api/user/profile': 'Delete user account (Protected)'
       },
       projects: {
         'POST /api/projects': 'Create a new project (Protected)',
@@ -237,6 +255,44 @@ router.get('/docs', (req, res) => {
         'POST /api/projects/:projectId/integrate/jira': 'Sync artifacts to Jira (Protected)',
         'POST /api/projects/:projectId/integrate/jira/test': 'Test Jira connection (Protected)',
         'GET /api/projects/:projectId/integrate/status': 'Get integration status (Protected)'
+      },
+      demoRequests: {
+        'POST /api/demo-requests': 'Create demo request (Public)',
+        'GET /api/demo-requests': 'Get all demo requests (Admin)',
+        'PUT /api/demo-requests/:id': 'Update demo request status (Admin)',
+        'DELETE /api/demo-requests/:id': 'Delete demo request (Admin)'
+      },
+      trialRequests: {
+        'POST /api/trial-requests': 'Create trial request (Public)',
+        'GET /api/trial-requests': 'Get all trial requests (Admin)',
+        'PUT /api/trial-requests/:id': 'Update trial request status (Admin)',
+        'DELETE /api/trial-requests/:id': 'Delete trial request (Admin)'
+      },
+      emailCaptures: {
+        'POST /api/email-captures': 'Create email capture (Public)',
+        'GET /api/email-captures': 'Get all email captures (Admin)',
+        'GET /api/email-captures/stats': 'Get email capture statistics (Admin)',
+        'DELETE /api/email-captures/:id': 'Delete email capture (Admin)'
+      },
+      chat: {
+        'POST /api/chat': 'Chat with AI assistant (Protected)'
+      },
+      foresight: {
+        'POST /api/foresight/analyze': 'Analyze startup idea and generate insights (Public)',
+        'POST /api/foresight/compare': 'Compare idea with competitors (Public)',
+        'POST /api/foresight/export': 'Generate PDF report of analysis (Public)',
+        'GET /api/foresight/health': 'Foresight service health check (Public)'
+      },
+      refinement: {
+        'POST /api/refine-requirement': 'Refine requirement using AI and semantic context (Public)',
+        'GET /api/refinement/suggestions': 'Get refinement suggestions for requirement (Public)',
+        'POST /api/refinement/feedback': 'Submit feedback on refinement quality (Public)'
+      },
+      inputHistory: {
+        'GET /api/input-history/user/:userId': 'Get all inputs for a user across projects (Protected)',
+        'GET /api/input-history/project/:projectId': 'Get input history for a specific project (Protected)',
+        'GET /api/input-history/recent': 'Get recent inputs for authenticated user (Protected)',
+        'GET /api/input-history/stats': 'Get input statistics for authenticated user (Protected)'
       }
     }
   });
@@ -250,6 +306,13 @@ router.use('/projects', generateRoutes);
 router.use('/projects', artifactRoutes);
 router.use('/projects', integrateRoutes);
 router.use('/chat', chatRoutes);
+router.use('/demo-requests', demoRequestRoutes);
+router.use('/trial-requests', trialRequestRoutes);
+router.use('/email-captures', emailCaptureRoutes);
+router.use('/user', userProfileRoutes);
+router.use('/foresight', foresightRoutes);
+router.use('/refinement', refinementRoutes);
+router.use('/input-history', inputHistoryRoutes);
 
 // Debug middleware to log all requests
 router.use((req, res, next) => {

@@ -198,6 +198,42 @@ const ensureDatabaseSchema = async () => {
     await prisma.$executeRawUnsafe(
       'ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "resetExpiry" TIMESTAMP(3)'
     );
+    
+    // Add new user profile fields if missing
+    await prisma.$executeRawUnsafe(
+      'ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "avatarUrl" TEXT'
+    );
+    await prisma.$executeRawUnsafe(
+      'ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "phone" TEXT'
+    );
+    await prisma.$executeRawUnsafe(
+      'ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "role" TEXT'
+    );
+    await prisma.$executeRawUnsafe(
+      'ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "company" TEXT'
+    );
+    await prisma.$executeRawUnsafe(
+      'ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "location" TEXT'
+    );
+    await prisma.$executeRawUnsafe(
+      'ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "website" TEXT'
+    );
+    await prisma.$executeRawUnsafe(
+      'ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "bio" TEXT'
+    );
+    await prisma.$executeRawUnsafe(
+      'ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "twitter" TEXT'
+    );
+    await prisma.$executeRawUnsafe(
+      'ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "linkedin" TEXT'
+    );
+    await prisma.$executeRawUnsafe(
+      'ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "github" TEXT'
+    );
+    await prisma.$executeRawUnsafe(
+      'ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "lastLoginAt" TIMESTAMP(3)'
+    );
+    
     logger.info('Database schema verified/updated successfully');
   } catch (error) {
     logger.error('Database schema verification failed', error);

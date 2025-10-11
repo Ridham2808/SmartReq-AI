@@ -5,6 +5,7 @@ import { useAuthStore } from '@/hooks/useAuth'
 import { useProjectsQuery, useCreateProject } from '@/hooks/useProjectsQuery'
 import ProjectCard from '@/components/ProjectCard'
 import AuthDebugger from '@/components/AuthDebugger'
+import InputHistory from '@/components/InputHistory'
 import { Modal, Form, Input, Button } from 'antd'
 import FloatingAssistant from '@/components/FloatingAssistant'
 import OcrWidget from '@/components/OcrWidget'
@@ -122,6 +123,15 @@ export default function DashboardPage(){
             </div>
           </button>
         </div>
+      </section>
+
+      {/* Recent Input History */}
+      <section className="mt-10">
+        <div className="mb-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Recent Inputs</h2>
+          <p className="text-gray-600 text-sm">Your recent activity across all projects</p>
+        </div>
+        <InputHistory showProjectName={true} limit={5} />
       </section>
 
       <Modal title="Create Project" open={open} onOk={onCreate} onCancel={() => setOpen(false)} confirmLoading={createMutation.isPending}>

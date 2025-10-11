@@ -9,10 +9,12 @@
     "test": "node test-backend.js",
     "test:local": "BACKEND_URL=http://localhost:5000 node test-backend.js",
     "test:production": "BACKEND_URL=https://smartreq-ai-backend.onrender.com node test-backend.js",
+    "setup:db": "node setup-database.js",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "db:reset": "prisma migrate reset"
   },
   "keywords": [
     "ai",
@@ -44,6 +46,7 @@
     "multer": "^1.4.5-lts.1",
     "node-fetch": "^3.3.2",
     "nodemailer": "^7.0.6",
+    "openai": "^4.104.0",
     "p-queue": "^8.1.1",
     "p-retry": "^6.2.1",
     "pdf-parse": "^1.1.1",
@@ -54,6 +57,6 @@
     "winston": "^3.11.0"
   },
   "devDependencies": {
-    "nodemon": "^3.0.2"
+    "nodemon": "^3.1.10"
   }
 }

@@ -1,6 +1,7 @@
 "use client"
 import { useEffect, useRef, useState } from 'react'
 import Script from 'next/script'
+import ClientOnly from './ClientOnly'
 
 export default function OcrWidget({ open, onClose }){
   const [scriptsReady, setScriptsReady] = useState(false)
@@ -91,7 +92,7 @@ export default function OcrWidget({ open, onClose }){
   if (!open) return null
 
   return (
-    <>
+    <ClientOnly>
       <Script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js" onLoad={() => setScriptsReady(true)} strategy="afterInteractive" />
       <Script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.min.js" strategy="afterInteractive" />
 
@@ -148,7 +149,7 @@ export default function OcrWidget({ open, onClose }){
           </div>
         </div>
       </div>
-    </>
+    </ClientOnly>
   )
 }
 

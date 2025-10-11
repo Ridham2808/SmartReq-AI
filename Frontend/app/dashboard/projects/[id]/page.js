@@ -9,6 +9,7 @@ import { z } from 'zod'
 import InputForm from '@/components/InputForm'
 import VoiceRecorder from '@/components/VoiceRecorder'
 import InputsList from '@/components/InputsList'
+import InputHistory from '@/components/InputHistory'
 import ArtifactEditor from '@/components/ArtifactEditor'
 import FlowChart from '@/components/FlowChart'
 import ProcessFlowCard from '@/components/ProcessFlowCard'
@@ -422,6 +423,11 @@ export default function ProjectDetailPage() {
               <InputForm projectId={projectId} />
               <div className="mt-6">
                 <InputsList projectId={projectId} inputs={inputs} />
+              </div>
+              
+              {/* Project Input History */}
+              <div className="mt-6">
+                <InputHistory projectId={projectId} showProjectName={false} limit={10} />
               </div>
             </motion.div>
 

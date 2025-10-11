@@ -5,7 +5,6 @@ import { MantineProvider } from '@mantine/core'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import ErrorBoundary from '@/components/ErrorBoundary'
-import { AnimatePresence } from 'framer-motion'
 import { useState } from 'react'
 
 export default function Providers({ children }) {
@@ -16,9 +15,7 @@ export default function Providers({ children }) {
       <QueryClientProvider client={queryClient}>
         <ChakraProvider>
           <MantineProvider>
-            <AnimatePresence mode="wait" initial={false}>
-              {children}
-            </AnimatePresence>
+            {children}
             <ToastContainer position="top-right" theme="colored" />
             {/* <ReactQueryDevtools initialIsOpen={false} /> */}
           </MantineProvider>

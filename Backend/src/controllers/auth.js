@@ -124,6 +124,12 @@ const login = asyncHandler(async (req, res) => {
     });
   }
 
+  // Update last login time
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { lastLoginAt: new Date() }
+  });
+
   // Generate JWT token with appropriate expiry based on rememberMe
   const tokenExpiry = rememberMe ? '30d' : '7d'; // 30 days if rememberMe is true, 7 days otherwise
   const token = generateToken(user.id, tokenExpiry);
@@ -135,7 +141,10 @@ const login = asyncHandler(async (req, res) => {
       user: {
         id: user.id,
         name: user.name,
-        email: user.email
+        email: user.email,
+        avatarUrl: user.avatarUrl || null,
+        isVerified: user.isVerified,
+        createdAt: user.createdAt
       },
       token,
       rememberMe: rememberMe || false
@@ -415,6 +424,109 @@ const resendVerification = asyncHandler(async (req, res) => {
   });
 });
 
+/**
+ * Update user profile
+ * PUT /api/auth/profile
+ */
+const updateProfile = asyncHandler(async (req, res) => {
+  const { name, email, currentPassword, newPassword } = req.body;
+  const userId = req.user.id;
+
+  // Get current user data
+  const currentUser = await prisma.user.findUnique({
+    where: { id: userId }
+  });
+
+  if (!currentUser) {
+    return res.status(404).json({
+      success: false,
+      message: 'User not found'
+    });
+  }
+
+  // Check if email is being changed and if it's already taken
+  if (email && email !== currentUser.email) {
+    const existingUser = await prisma.user.findUnique({
+      where: { email }
+    });
+
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is already taken'
+      });
+    }
+  }
+
+  // If password change is requested
+  if (currentPassword && newPassword) {
+    // Verify current password
+    const isCurrentPasswordValid = await bcrypt.compare(currentPassword, currentUser.password);
+    
+    if (!isCurrentPasswordValid) {
+      return res.status(400).json({
+        success: false,
+        message: 'Current password is incorrect'
+      });
+    }
+
+    // Hash new password
+    const saltRounds = 12;
+    const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds);
+
+    // Update user with new password and other fields
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        name: name || currentUser.name,
+        email: email || currentUser.email,
+        password: hashedNewPassword
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        avatarUrl: true,
+        isVerified: true,
+        createdAt: true
+      }
+    });
+
+    logger.info(`User profile updated with password change: ${updatedUser.email}`);
+    
+    return res.json({
+      success: true,
+      message: 'Profile updated successfully',
+      user: updatedUser
+    });
+  }
+
+  // Update user without password change
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      name: name || currentUser.name,
+      email: email || currentUser.email
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      avatarUrl: true,
+      isVerified: true,
+      createdAt: true
+    }
+  });
+
+  logger.info(`User profile updated: ${updatedUser.email}`);
+
+  res.json({
+    success: true,
+    message: 'Profile updated successfully',
+    user: updatedUser
+  });
+});
+
 module.exports = {
   register,
   login,
@@ -422,5 +534,6 @@ module.exports = {
   verifyEmail,
   resendVerification,
   forgotPassword,
-  resetPassword
+  resetPassword,
+  updateProfile
 };

@@ -74,6 +74,27 @@ const resendVerificationSchema = Joi.object({
   })
 });
 
+// Update profile schema
+const updateProfileSchema = Joi.object({
+  name: Joi.string().min(2).max(50).optional().messages({
+    'string.min': 'Name must be at least 2 characters long',
+    'string.max': 'Name must not exceed 50 characters'
+  }),
+  email: Joi.string().email().optional().messages({
+    'string.email': 'Please provide a valid email address'
+  }),
+  currentPassword: Joi.string().when('newPassword', {
+    is: Joi.exist(),
+    then: Joi.required(),
+    otherwise: Joi.optional()
+  }).messages({
+    'any.required': 'Current password is required when changing password'
+  }),
+  newPassword: Joi.string().min(8).optional().messages({
+    'string.min': 'New password must be at least 8 characters long'
+  })
+});
+
 // Project validation schemas
 const projectSchema = Joi.object({
   name: Joi.string().min(1).max(100).required().messages({
@@ -214,6 +235,7 @@ module.exports = {
   resetPasswordSchema,
   verifyEmailSchema,
   resendVerificationSchema,
+  updateProfileSchema,
   projectSchema,
   projectUpdateSchema,
   inputSchema,

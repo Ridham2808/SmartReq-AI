@@ -9,6 +9,8 @@ import ReactFlow, {
   addEdge,
   ConnectionLineType,
   Panel,
+  Handle,
+  Position,
 } from 'reactflow'
 import dagre from 'dagre'
 import debounce from 'lodash.debounce'
@@ -19,7 +21,7 @@ import 'reactflow/dist/style.css'
 import { api } from '@/lib/api'
 
 // Custom node types with different shapes
-const CustomNode = ({ data, selected }) => {
+const CustomNode = ({ data, selected, onDoubleClick }) => {
   const isDecision = data.type === 'decision'
   const isStart = data.type === 'start'
   const isEnd = data.type === 'end'
@@ -33,9 +35,124 @@ const CustomNode = ({ data, selected }) => {
       <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="relative"
+        className="relative cursor-pointer"
         style={{ width: '140px', height: '140px' }}
+        onDoubleClick={onDoubleClick}
       >
+        {/* Connection Handles */}
+        <Handle
+          type="source"
+          position={Position.Right}
+          id="right"
+          style={{ 
+            background: '#6366f1', 
+            width: 12, 
+            height: 12, 
+            border: '2px solid white',
+            right: -6,
+            top: '50%',
+            transform: 'translateY(-50%)'
+          }}
+        />
+        <Handle
+          type="source"
+          position={Position.Left}
+          id="left"
+          style={{ 
+            background: '#6366f1', 
+            width: 12, 
+            height: 12, 
+            border: '2px solid white',
+            left: -6,
+            top: '50%',
+            transform: 'translateY(-50%)'
+          }}
+        />
+        <Handle
+          type="source"
+          position={Position.Top}
+          id="top"
+          style={{ 
+            background: '#6366f1', 
+            width: 12, 
+            height: 12, 
+            border: '2px solid white',
+            top: -6,
+            left: '50%',
+            transform: 'translateX(-50%)'
+          }}
+        />
+        <Handle
+          type="source"
+          position={Position.Bottom}
+          id="bottom"
+          style={{ 
+            background: '#6366f1', 
+            width: 12, 
+            height: 12, 
+            border: '2px solid white',
+            bottom: -6,
+            left: '50%',
+            transform: 'translateX(-50%)'
+          }}
+        />
+        <Handle
+          type="target"
+          position={Position.Right}
+          id="target-right"
+          style={{ 
+            background: '#10b981', 
+            width: 12, 
+            height: 12, 
+            border: '2px solid white',
+            right: -6,
+            top: '30%',
+            transform: 'translateY(-50%)'
+          }}
+        />
+        <Handle
+          type="target"
+          position={Position.Left}
+          id="target-left"
+          style={{ 
+            background: '#10b981', 
+            width: 12, 
+            height: 12, 
+            border: '2px solid white',
+            left: -6,
+            top: '30%',
+            transform: 'translateY(-50%)'
+          }}
+        />
+        <Handle
+          type="target"
+          position={Position.Top}
+          id="target-top"
+          style={{ 
+            background: '#10b981', 
+            width: 12, 
+            height: 12, 
+            border: '2px solid white',
+            top: -6,
+            left: '30%',
+            transform: 'translateX(-50%)'
+          }}
+        />
+        <Handle
+          type="target"
+          position={Position.Bottom}
+          id="target-bottom"
+          style={{ 
+            background: '#10b981', 
+            width: 12, 
+            height: 12, 
+            border: '2px solid white',
+            bottom: -6,
+            left: '30%',
+            transform: 'translateX(-50%)'
+          }}
+        />
+        
         <div 
           className={`absolute inset-0 transform rotate-45 ${bgColor} border-2 ${borderColor} shadow-lg`}
           style={{ width: '100px', height: '100px', top: '20px', left: '20px' }}
@@ -56,8 +173,123 @@ const CustomNode = ({ data, selected }) => {
       animate={{ scale: 1, opacity: 1 }}
       className={`px-4 py-3 shadow-lg border-2 ${borderColor} ${
         isStart || isEnd ? 'rounded-full' : 'rounded-lg'
-      } ${bgColor} text-white min-w-[120px]`}
+      } ${bgColor} text-white min-w-[120px] cursor-pointer relative`}
+      onDoubleClick={onDoubleClick}
     >
+      {/* Connection Handles */}
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="right"
+        style={{ 
+          background: '#6366f1', 
+          width: 12, 
+          height: 12, 
+          border: '2px solid white',
+          right: -6,
+          top: '50%',
+          transform: 'translateY(-50%)'
+        }}
+      />
+      <Handle
+        type="source"
+        position={Position.Left}
+        id="left"
+        style={{ 
+          background: '#6366f1', 
+          width: 12, 
+          height: 12, 
+          border: '2px solid white',
+          left: -6,
+          top: '50%',
+          transform: 'translateY(-50%)'
+        }}
+      />
+      <Handle
+        type="source"
+        position={Position.Top}
+        id="top"
+        style={{ 
+          background: '#6366f1', 
+          width: 12, 
+          height: 12, 
+          border: '2px solid white',
+          top: -6,
+          left: '50%',
+          transform: 'translateX(-50%)'
+        }}
+      />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        id="bottom"
+        style={{ 
+          background: '#6366f1', 
+          width: 12, 
+          height: 12, 
+          border: '2px solid white',
+          bottom: -6,
+          left: '50%',
+          transform: 'translateX(-50%)'
+        }}
+      />
+      <Handle
+        type="target"
+        position={Position.Right}
+        id="target-right"
+        style={{ 
+          background: '#10b981', 
+          width: 12, 
+          height: 12, 
+          border: '2px solid white',
+          right: -6,
+          top: '30%',
+          transform: 'translateY(-50%)'
+        }}
+      />
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="target-left"
+        style={{ 
+          background: '#10b981', 
+          width: 12, 
+          height: 12, 
+          border: '2px solid white',
+          left: -6,
+          top: '30%',
+          transform: 'translateY(-50%)'
+        }}
+      />
+      <Handle
+        type="target"
+        position={Position.Top}
+        id="target-top"
+        style={{ 
+          background: '#10b981', 
+          width: 12, 
+          height: 12, 
+          border: '2px solid white',
+          top: -6,
+          left: '30%',
+          transform: 'translateX(-50%)'
+        }}
+      />
+      <Handle
+        type="target"
+        position={Position.Bottom}
+        id="target-bottom"
+        style={{ 
+          background: '#10b981', 
+          width: 12, 
+          height: 12, 
+          border: '2px solid white',
+          bottom: -6,
+          left: '30%',
+          transform: 'translateX(-50%)'
+        }}
+      />
+      
       <div className="text-center">
         <div className="font-semibold text-sm">{data.label}</div>
       </div>
@@ -72,8 +304,26 @@ const nodeTypes = {
 const defaultEdgeOptions = {
   animated: true,
   type: 'smoothstep',
-  style: { stroke: '#6366f1', strokeWidth: 2 },
-  labelStyle: { fill: '#374151', fontSize: 11 },
+  style: { 
+    stroke: '#6366f1', 
+    strokeWidth: 3,
+    strokeDasharray: '0',
+  },
+  labelStyle: { 
+    fill: '#374151', 
+    fontSize: 12,
+    fontWeight: 'bold',
+    background: 'white',
+    padding: '4px 8px',
+    borderRadius: '4px',
+    border: '1px solid #d1d5db'
+  },
+  markerEnd: {
+    type: 'arrowclosed',
+    color: '#6366f1',
+    width: 20,
+    height: 20,
+  },
 }
 
 export default function FlowChart({ initialNodes = [], initialEdges = [], onNodeClick, projectId, onFlowChange, aiMermaidCode }) {
@@ -87,6 +337,11 @@ export default function FlowChart({ initialNodes = [], initialEdges = [], onNode
   const mermaidRef = useRef(null)
   const [mermaidSvg, setMermaidSvg] = useState('')
   const containerRef = useRef(null)
+  const [isRenaming, setIsRenaming] = useState(false)
+  const [renameValue, setRenameValue] = useState('')
+  const [selectedEdge, setSelectedEdge] = useState(null)
+  const [isAddingEdgeLabel, setIsAddingEdgeLabel] = useState(false)
+  const [edgeLabel, setEdgeLabel] = useState('')
   
   // Extract unique actors from nodes for swimlane rendering
   const actors = useMemo(() => {
@@ -192,8 +447,26 @@ export default function FlowChart({ initialNodes = [], initialEdges = [], onNode
     }
   }, [onNodeClick])
 
+  const onNodeDoubleClickHandler = useCallback((event, node) => {
+    setSelectedNode(node)
+    setIsRenaming(true)
+    setRenameValue(node.data.label || '')
+  }, [])
+
+  const onEdgeClickHandler = useCallback((event, edge) => {
+    setSelectedEdge(edge)
+    setSelectedNode(null) // Clear node selection when edge is selected
+  }, [])
+
+  const onEdgeDoubleClickHandler = useCallback((event, edge) => {
+    setSelectedEdge(edge)
+    setIsAddingEdgeLabel(true)
+    setEdgeLabel(edge.label || '')
+  }, [])
+
   const onPaneClick = useCallback(() => {
     setSelectedNode(null)
+    setSelectedEdge(null)
   }, [])
 
   // Add new node function
@@ -230,6 +503,64 @@ export default function FlowChart({ initialNodes = [], initialEdges = [], onNode
     setEdges([])
     setSelectedNode(null)
   }, [setNodes, setEdges])
+
+  // Start renaming a node
+  const startRename = useCallback(() => {
+    if (selectedNode) {
+      setIsRenaming(true)
+      setRenameValue(selectedNode.data.label || '')
+    }
+  }, [selectedNode])
+
+  // Cancel renaming
+  const cancelRename = useCallback(() => {
+    setIsRenaming(false)
+    setRenameValue('')
+  }, [])
+
+  // Save the renamed node
+  const saveRename = useCallback(() => {
+    if (selectedNode && renameValue.trim()) {
+      setNodes((nds) => 
+        nds.map((node) => 
+          node.id === selectedNode.id 
+            ? { ...node, data: { ...node.data, label: renameValue.trim() } }
+            : node
+        )
+      )
+      setIsRenaming(false)
+      setRenameValue('')
+    }
+  }, [selectedNode, renameValue, setNodes])
+
+  // Save edge label
+  const saveEdgeLabel = useCallback(() => {
+    if (selectedEdge) {
+      setEdges((eds) => 
+        eds.map((edge) => 
+          edge.id === selectedEdge.id 
+            ? { ...edge, label: edgeLabel.trim() }
+            : edge
+        )
+      )
+      setIsAddingEdgeLabel(false)
+      setEdgeLabel('')
+    }
+  }, [selectedEdge, edgeLabel, setEdges])
+
+  // Cancel edge label editing
+  const cancelEdgeLabel = useCallback(() => {
+    setIsAddingEdgeLabel(false)
+    setEdgeLabel('')
+  }, [])
+
+  // Delete selected edge
+  const deleteSelectedEdge = useCallback(() => {
+    if (selectedEdge) {
+      setEdges((eds) => eds.filter((edge) => edge.id !== selectedEdge.id))
+      setSelectedEdge(null)
+    }
+  }, [selectedEdge, setEdges])
 
   // Socket.io sync
   useEffect(() => {
@@ -477,6 +808,9 @@ export default function FlowChart({ initialNodes = [], initialEdges = [], onNode
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onNodeClick={onNodeClickHandler}
+        onNodeDoubleClick={onNodeDoubleClickHandler}
+        onEdgeClick={onEdgeClickHandler}
+        onEdgeDoubleClick={onEdgeDoubleClickHandler}
         onPaneClick={onPaneClick}
         nodeTypes={nodeTypes}
         defaultEdgeOptions={defaultEdgeOptions}
@@ -544,12 +878,39 @@ export default function FlowChart({ initialNodes = [], initialEdges = [], onNode
               + End
             </button>
             {selectedNode && (
+              <>
+                <button
+                  onClick={startRename}
+                  className="px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+                >
+                  ✏️ Rename
+                </button>
               <button
                 onClick={deleteSelectedNode}
                 className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
               >
                 Delete
               </button>
+              </>
+            )}
+            {selectedEdge && (
+              <>
+                <button
+                  onClick={() => {
+                    setIsAddingEdgeLabel(true)
+                    setEdgeLabel(selectedEdge.label || '')
+                  }}
+                  className="px-3 py-1 text-xs bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors"
+                >
+                  🏷️ Label
+                </button>
+                <button
+                  onClick={deleteSelectedEdge}
+                  className="px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
+                >
+                  Delete
+                </button>
+              </>
             )}
             <button
               onClick={clearFlow}
@@ -567,12 +928,118 @@ export default function FlowChart({ initialNodes = [], initialEdges = [], onNode
               <h4 className="font-medium text-sm text-gray-900">Node Details</h4>
               <div className="text-xs space-y-1">
                 <div><span className="font-medium">Type:</span> {selectedNode.data.type}</div>
-                <div><span className="font-medium">Label:</span> {selectedNode.data.label}</div>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">Label:</span>
+                  {isRenaming ? (
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="text"
+                        value={renameValue}
+                        onChange={(e) => setRenameValue(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') saveRename()
+                          if (e.key === 'Escape') cancelRename()
+                        }}
+                        className="px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                        autoFocus
+                      />
+                      <button
+                        onClick={saveRename}
+                        className="px-2 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600"
+                      >
+                        ✓
+                      </button>
+                      <button
+                        onClick={cancelRename}
+                        className="px-2 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ) : (
+                    <span>{selectedNode.data.label}</span>
+                  )}
+                </div>
                 {selectedNode.data.description && (
                   <div><span className="font-medium">Description:</span> {selectedNode.data.description}</div>
                 )}
                 <div><span className="font-medium">Position:</span> ({Math.round(selectedNode.position.x)}, {Math.round(selectedNode.position.y)})</div>
               </div>
+              {!isRenaming && (
+                <div className="pt-2 border-t border-gray-200">
+                  <button
+                    onClick={startRename}
+                    className="w-full px-3 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+                  >
+                    ✏️ Rename Node
+                  </button>
+                </div>
+              )}
+            </div>
+          </Panel>
+        )}
+
+        {/* Edge Info Panel */}
+        {selectedEdge && (
+          <Panel position="top-left" className="bg-white rounded-lg shadow-lg p-3 max-w-xs">
+            <div className="space-y-2">
+              <h4 className="font-medium text-sm text-gray-900">Connection Details</h4>
+              <div className="text-xs space-y-1">
+                <div><span className="font-medium">From:</span> {selectedEdge.source}</div>
+                <div><span className="font-medium">To:</span> {selectedEdge.target}</div>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">Label:</span>
+                  {isAddingEdgeLabel ? (
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="text"
+                        value={edgeLabel}
+                        onChange={(e) => setEdgeLabel(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') saveEdgeLabel()
+                          if (e.key === 'Escape') cancelEdgeLabel()
+                        }}
+                        className="px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-purple-500"
+                        placeholder="Connection label..."
+                        autoFocus
+                      />
+                      <button
+                        onClick={saveEdgeLabel}
+                        className="px-2 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600"
+                      >
+                        ✓
+                      </button>
+                      <button
+                        onClick={cancelEdgeLabel}
+                        className="px-2 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ) : (
+                    <span>{selectedEdge.label || 'No label'}</span>
+                  )}
+                </div>
+              </div>
+              {!isAddingEdgeLabel && (
+                <div className="pt-2 border-t border-gray-200 space-y-1">
+                  <button
+                    onClick={() => {
+                      setIsAddingEdgeLabel(true)
+                      setEdgeLabel(selectedEdge.label || '')
+                    }}
+                    className="w-full px-3 py-1 text-xs bg-purple-100 text-purple-700 rounded hover:bg-purple-200 transition-colors"
+                  >
+                    🏷️ Add/Edit Label
+                  </button>
+                  <button
+                    onClick={deleteSelectedEdge}
+                    className="w-full px-3 py-1 text-xs bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
+                  >
+                    🗑️ Delete Connection
+                  </button>
+                </div>
+              )}
             </div>
           </Panel>
         )}
@@ -583,9 +1050,13 @@ export default function FlowChart({ initialNodes = [], initialEdges = [], onNode
         <div className="absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm rounded-lg p-2 text-xs text-gray-600 z-20">
           <div className="space-y-1">
             <div>• Click and drag to move nodes</div>
-            <div>• Drag from node edge to create connections</div>
-            <div>• Click node to select and view details</div>
-            <div>• Use controls to add/delete nodes</div>
+            <div>• <strong>Look for small blue/green circles on node edges</strong></div>
+            <div>• <strong>Drag from blue circles to create connections</strong></div>
+            <div>• Click node/connection to select and view details</div>
+            <div>• Use controls to add/delete/rename nodes</div>
+            <div>• Double-click node to rename quickly</div>
+            <div>• <strong>Double-click connection to add label</strong></div>
+            <div>• <strong>Click connection to edit/delete it</strong></div>
           </div>
         </div>
       )}

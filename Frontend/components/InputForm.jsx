@@ -5,6 +5,7 @@ import { Dropzone } from '@mantine/dropzone'
 import { toast } from 'react-toastify'
 import { motion } from 'framer-motion'
 import { internalApi as api } from '@/lib/api'
+import RequirementRefinement from './RequirementRefinement'
 
 export default function InputForm({ projectId }) {
   const [textInput, setTextInput] = useState('')
@@ -23,6 +24,9 @@ export default function InputForm({ projectId }) {
     onSuccess: () => {
       toast.success('Text input saved successfully!')
       queryClient.invalidateQueries(['project-inputs', projectId])
+      queryClient.invalidateQueries(['input-history', projectId])
+      queryClient.invalidateQueries(['input-history'])
+      queryClient.invalidateQueries(['input-stats'])
     },
     onError: (error) => {
       toast.error(`Failed to save text: ${error.message}`)
@@ -46,6 +50,9 @@ export default function InputForm({ projectId }) {
       setSelectedFile(null)
       setUploadProgress(0)
       queryClient.invalidateQueries(['project-inputs', projectId])
+      queryClient.invalidateQueries(['input-history', projectId])
+      queryClient.invalidateQueries(['input-history'])
+      queryClient.invalidateQueries(['input-stats'])
     },
     onError: (error) => {
       toast.error(`File upload failed: ${error.message}`)
@@ -172,6 +179,21 @@ export default function InputForm({ projectId }) {
           )}
           Save Text Input
         </button>
+        
+        {/* AI Refinement Component */}
+        {textInput.trim() && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <RequirementRefinement
+              originalRequirement={textInput}
+              onRefinedRequirement={setTextInput}
+              projectId={projectId}
+            />
+          </motion.div>
+        )}
       </motion.div>
 
       {/* File Upload Section */}
