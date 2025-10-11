@@ -1,20 +1,26 @@
-import { Router } from 'express'
-import { authenticateToken } from '../middleware/auth.js'
-import { syncToJira, testJiraConnection, getIntegrationStatus } from '../controllers/integrate.js'
-import { validateRequest, jiraSyncSchema, jiraTestSchema } from '../middleware/validation.js'
-
-const router = Router()
+const express = require('express');
+const router = express.Router();
+const { 
+  syncToJira, 
+  testJiraConnection, 
+  getIntegrationStatus 
+} = require('../controllers/integrate');
+const { 
+  validate, 
+  jiraIntegrationSchema 
+} = require('../middleware/validation');
+const { authenticateToken } = require('../middleware/auth');
 
 // All routes are protected
-router.use(authenticateToken)
+router.use(authenticateToken);
 
 // POST /api/projects/:projectId/integrate/jira
-router.post('/:projectId/integrate/jira', validateRequest(jiraSyncSchema), syncToJira)
+router.post('/:projectId/integrate/jira', validate(jiraIntegrationSchema), syncToJira);
 
 // POST /api/projects/:projectId/integrate/jira/test
-router.post('/:projectId/integrate/jira/test', validateRequest(jiraTestSchema), testJiraConnection)
+router.post('/:projectId/integrate/jira/test', validate(jiraIntegrationSchema), testJiraConnection);
 
 // GET /api/projects/:projectId/integrate/status
-router.get('/:projectId/integrate/status', getIntegrationStatus)
+router.get('/:projectId/integrate/status', getIntegrationStatus);
 
-export default router
+module.exports = router;
