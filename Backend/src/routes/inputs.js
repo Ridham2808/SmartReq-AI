@@ -1,23 +1,33 @@
-import { Router } from 'express'
-import { authenticateToken } from '../middleware/auth.js'
-import { createInput, getInputs, getInput, deleteInput } from '../controllers/inputs.js'
-import { uploadMiddleware } from '../utils/fileUtils.js'
-
-const router = Router()
+const express = require('express');
+const router = express.Router();
+const { 
+  createInput, 
+  getInputs, 
+  getInput, 
+  deleteInput 
+} = require('../controllers/inputs');
+const { 
+  validate, 
+  validateQuery, 
+  inputSchema, 
+  paginationSchema 
+} = require('../middleware/validation');
+const { authenticateToken } = require('../middleware/auth');
+const { uploadMiddleware } = require('../utils/fileUtils');
 
 // All routes are protected
-router.use(authenticateToken)
+router.use(authenticateToken);
 
 // POST /api/projects/:projectId/inputs
-router.post('/:projectId/inputs', uploadMiddleware, createInput)
+router.post('/:projectId/inputs', uploadMiddleware, validate(inputSchema), createInput);
 
 // GET /api/projects/:projectId/inputs
-router.get('/:projectId/inputs', getInputs)
+router.get('/:projectId/inputs', validateQuery(paginationSchema), getInputs);
 
 // GET /api/projects/:projectId/inputs/:inputId
-router.get('/:projectId/inputs/:inputId', getInput)
+router.get('/:projectId/inputs/:inputId', getInput);
 
 // DELETE /api/projects/:projectId/inputs/:inputId
-router.delete('/:projectId/inputs/:inputId', deleteInput)
+router.delete('/:projectId/inputs/:inputId', deleteInput);
 
-export default router
+module.exports = router;
