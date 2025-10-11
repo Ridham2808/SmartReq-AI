@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OCR Extractor • Powered by Tesseract.js</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+    />
+  </head>
+  <body class="bg-gray-50 min-h-screen">
+    <div class="max-w-3xl mx-auto px-4 py-8">
+      <header class="mb-6 flex items-center justify-between">
+        <h1 class="text-2xl font-semibold tracking-tight text-gray-800">
+          OCR File Extractor
+        </h1>
+        <a
+          href=".."
+          class="text-sm text-indigo-600 hover:text-indigo-700 hover:underline"
+          >Back</a
+        >
+      </header>
+
+      <section class="bg-white shadow rounded-xl p-5">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
+          <label
+            for="fileInput"
+            class="flex-1 flex items-center justify-between border-2 border-dashed border-gray-300 rounded-lg p-3 cursor-pointer hover:border-indigo-400 transition"
+          >
+            <span class="text-gray-600">Upload image or PDF</span>
+            <span class="px-3 py-1 text-xs font-medium bg-gray-100 rounded-md">Browse</span>
+          </label>
+          <input id="fileInput" type="file" accept="image/*,application/pdf" class="hidden" />
+
+          <select id="langSelect" class="sm:w-40 w-full border rounded-md px-3 py-2 text-sm">
+            <option value="eng" selected>English (eng)</option>
+            <option value="hin">Hindi (hin)</option>
+          </select>
+
+          <button id="clearBtn" class="w-full sm:w-auto px-4 py-2 text-sm rounded-md border text-gray-700 hover:bg-gray-50">
+            Clear
+          </button>
+        </div>
+
+        <div id="preview" class="hidden mb-4">
+          <img id="imgPreview" alt="Preview" class="max-h-64 rounded-lg shadow" />
+          <canvas id="pdfCanvas" class="hidden max-h-64 rounded-lg shadow"></canvas>
+        </div>
+
+        <div id="progressWrap" class="hidden mb-4">
+          <div class="flex items-center gap-3">
+            <svg class="animate-spin h-5 w-5 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+            </svg>
+            <div class="flex-1 h-2 bg-gray-200 rounded">
+              <div id="progressBar" class="h-2 bg-indigo-600 rounded" style="width: 0%"></div>
+            </div>
+            <span id="progressText" class="text-sm text-gray-600">0%</span>
+          </div>
+        </div>
+
+        <div class="mb-2 flex items-center justify-between">
+          <h2 class="text-sm font-medium text-gray-700">Extracted Text</h2>
+          <button id="copyBtn" class="px-3 py-1 text-xs rounded-md bg-indigo-600 text-white hover:bg-indigo-700">Copy</button>
+        </div>
+        <textarea id="output" rows="10" class="w-full border rounded-lg p-3 text-sm font-mono text-gray-800" placeholder="Your extracted text will appear here..."></textarea>
+
+        <p class="mt-4 text-xs text-gray-500">Powered by <a href="https://github.com/naptha/tesseract.js" class="text-indigo-600 hover:underline" target="_blank" rel="noopener">Tesseract.js</a>. PDF rendered via <a href="https://github.com/mozilla/pdfjs-dist" class="text-indigo-600 hover:underline" target="_blank" rel="noopener">pdfjs-dist</a>.</p>
+      </section>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168/build/pdf.min.js"></script>
+    <script src="./main.js"></script>
+  </body>
+  </html>
+
+
