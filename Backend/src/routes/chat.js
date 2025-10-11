@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { authenticateToken } from '../middleware/auth.js'
+import { chatHandler } from '../controllers/chat.js'
 
 const router = Router()
 
@@ -7,12 +8,6 @@ const router = Router()
 router.use(authenticateToken)
 
 // POST /api/chat
-router.post('/', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Chat endpoint (to be implemented)',
-    response: 'AI response will be here'
-  })
-})
+router.post('/', chatHandler)
 
 export default router
