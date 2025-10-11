@@ -1,44 +1,6 @@
-import dotenv from 'dotenv'
+require('dotenv').config();
 
-dotenv.config()
-
-// Environment variable validation
-const validateEnvironment = () => {
-  const requiredVars = [
-    'DATABASE_URL',
-    'JWT_SECRET'
-  ];
-  
-  const missingVars = requiredVars.filter(varName => !process.env[varName]);
-  
-  if (missingVars.length > 0) {
-    console.error('❌ Missing required environment variables:');
-    missingVars.forEach(varName => {
-      console.error(`   - ${varName}`);
-    });
-    console.error('\nPlease set these variables in your .env file');
-    process.exit(1);
-  }
-  
-  // Validate JWT_SECRET strength in production
-  if (process.env.NODE_ENV === 'production' && process.env.JWT_SECRET === 'your-super-secret-jwt-key-change-in-production') {
-    console.error('❌ JWT_SECRET must be changed in production environment');
-    process.exit(1);
-  }
-  
-  // Validate database URL format
-  if (process.env.DATABASE_URL && !process.env.DATABASE_URL.startsWith('postgresql://')) {
-    console.error('❌ DATABASE_URL must be a valid PostgreSQL connection string');
-    process.exit(1);
-  }
-  
-  console.log('✅ Environment variables validated successfully');
-};
-
-// Run validation on startup
-validateEnvironment();
-
-export const config = {
+const config = {
   // Server
   PORT: process.env.PORT || 5000,
   NODE_ENV: process.env.NODE_ENV || 'development',
@@ -74,11 +36,15 @@ export const config = {
   JIRA_ENABLED: (process.env.JIRA_ENABLED || 'false').toLowerCase() === 'true',
   
   // Email Configuration
-  SENDGRID_API_KEY: process.env.SENDGRID_API_KEY || '',
+  BREVO_API_KEY: process.env.BREVO_API_KEY || '',
   EMAIL_FROM: process.env.EMAIL_FROM || 'noreply@smartreq.ai',
-  MAILGUN_API_KEY: process.env.MAILGUN_API_KEY || '',
-  MAILGUN_DOMAIN: process.env.MAILGUN_DOMAIN || '',
   
-  // Frontend
+  // SMTP Fallback Configuration
+  EMAIL_HOST: process.env.EMAIL_HOST || 'smtp.gmail.com',
+  EMAIL_PORT: parseInt(process.env.EMAIL_PORT) || 465, // Default to SSL port for Gmail
+  EMAIL_USER: process.env.EMAIL_USER || '',
+  EMAIL_PASS: process.env.EMAIL_PASS || '',
   FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:3000',
 };
+
+module.exports = config;
