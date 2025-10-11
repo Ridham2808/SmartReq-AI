@@ -1,92 +1,70 @@
-import { extractRequirements } from './llm.js'
+const fs = require('fs')
+const path = require('path')
 
-export const processTextInput = async (content) => {
+// Best-effort optional imports; fallback gracefully if not installed
+let pdfParse = null
+try { pdfParse = require('pdf-parse') } catch (_) {}
+
+function stripPII(text) {
+  if (!text) return ''
+  return String(text)
+    .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, '[redacted-email]')
+    .replace(/\b\+?\d[\d\-()\s]{6,}\b/g, '[redacted-phone]')
+}
+
+async function extractTextFromFile(filePath) {
+  if (!filePath) return ''
+  const ext = path.extname(filePath).toLowerCase()
   try {
-    console.log('Processing text input...')
-    
-    // Extract requirements using LLM
-    const result = await extractRequirements(content)
-    
-    return {
-      success: true,
-      processedText: content,
-      requirements: result.requirements
+    if (ext === '.pdf' && pdfParse) {
+      const data = await pdfParse(fs.readFileSync(filePath))
+      return data.text || ''
     }
-  } catch (error) {
-    console.error('Process text input error:', error)
-    throw error
+    // Fallback: read raw text for .txt, naive for others
+    return fs.readFileSync(filePath, 'utf8')
+  } catch (_) {
+    return ''
   }
 }
 
-export const processVoiceInput = async (filePath) => {
-  try {
-    console.log('Processing voice input:', filePath)
-    
-    // Mock transcription - will be replaced with actual speech-to-text
-    const transcription = 'Mock transcription: User wants to create a login system with email verification.'
-    
-    // Extract requirements from transcription
-    const result = await extractRequirements(transcription)
-    
-    return {
-      success: true,
-      transcription,
-      requirements: result.requirements
+function chunkText(text, tokensPerChunk = 500) {
+  const words = String(text).split(/\s+/)
+  const chunks = []
+  let current = []
+  let count = 0
+  for (const w of words) {
+    current.push(w)
+    count += 1
+    if (count >= tokensPerChunk) {
+      chunks.push(current.join(' '))
+      current = []
+      count = 0
     }
-  } catch (error) {
-    console.error('Process voice input error:', error)
-    throw error
   }
+  if (current.length) chunks.push(current.join(' '))
+  return chunks
 }
 
-export const processDocumentInput = async (filePath) => {
-  try {
-    console.log('Processing document input:', filePath)
-    
-    // Mock text extraction - will be replaced with actual PDF/document parser
-    const extractedText = 'Mock extracted text: The system shall provide user authentication and authorization features.'
-    
-    // Extract requirements from document
-    const result = await extractRequirements(extractedText)
-    
-    return {
-      success: true,
-      extractedText,
-      requirements: result.requirements
+async function buildCombinedTextFromInputs(inputs) {
+  // For voice: assume content is already transcribed
+  // For docs: extract from filePath if content missing
+  const parts = []
+  for (const input of inputs) {
+    if (input.content && input.content.trim()) {
+      parts.push(input.content)
+      continue
     }
-  } catch (error) {
-    console.error('Process document input error:', error)
-    throw error
+    if (input.filePath) {
+      const txt = await extractTextFromFile(input.filePath)
+      if (txt) parts.push(txt)
+    }
   }
+  return stripPII(parts.join('\n\n'))
 }
 
-export const consolidateInputs = async (inputs) => {
-  try {
-    console.log('Consolidating inputs:', inputs.length)
-    
-    // Combine all requirements from inputs
-    const allRequirements = []
-    
-    for (const input of inputs) {
-      if (input.content) {
-        const result = await processTextInput(input.content)
-        allRequirements.push(...result.requirements)
-      }
-    }
-    
-    // Remove duplicates based on description
-    const uniqueRequirements = allRequirements.filter((req, index, self) =>
-      index === self.findIndex((r) => r.description === req.description)
-    )
-    
-    return {
-      success: true,
-      consolidatedRequirements: uniqueRequirements,
-      totalInputs: inputs.length,
-      totalRequirements: uniqueRequirements.length
-    }
-  } catch (error) {
-    console.error('Consolidate inputs error:', error)
-    throw error
-  }
+module.exports = {
+  stripPII,
+  chunkText,
+  buildCombinedTextFromInputs,
 }
+
