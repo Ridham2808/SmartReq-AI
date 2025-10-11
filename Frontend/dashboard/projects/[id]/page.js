@@ -6,7 +6,7 @@ import { Button, useToast, Spinner } from '@chakra-ui/react'
 
 export default function ProjectDetailPage() {
   const router = useRouter()
-  const toast = useToast()
+  const toast = useToast()  
 
   // Basic states
   const [project, setProject] = useState(null)
