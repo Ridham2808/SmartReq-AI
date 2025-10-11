@@ -114,3 +114,4 @@ Rules:
 
 module.exports = { generateArtifactsFromText }
 
+
