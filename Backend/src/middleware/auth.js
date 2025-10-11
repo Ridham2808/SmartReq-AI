@@ -52,7 +52,7 @@ const authenticateToken = async (req, res, next) => {
       message: 'Authentication error'
     });
   }
-}
+};
 
 const generateToken = (userId, customExpiry = null) => {
   const expiresIn = customExpiry || config.JWT_EXPIRES_IN;
