@@ -1,11 +1,11 @@
-import prisma from '../config/db.js'
-import { asyncHandler } from '../middleware/errorHandler.js'
+const prisma = require('../config/db');
+const { asyncHandler } = require('../middleware/errorHandler');
 
 /**
  * Create a new project
  * POST /api/projects
  */
-export const createProject = asyncHandler(async (req, res) => {
+const createProject = asyncHandler(async (req, res) => {
   const { name, description } = req.body;
   const userId = req.user.id;
 
@@ -51,7 +51,7 @@ export const createProject = asyncHandler(async (req, res) => {
  * Get all projects for current user
  * GET /api/projects
  */
-export const getProjects = asyncHandler(async (req, res) => {
+const getProjects = asyncHandler(async (req, res) => {
   const userId = req.user.id;
   const { page = 1, limit = 10, search = '' } = req.query;
 
@@ -111,7 +111,7 @@ export const getProjects = asyncHandler(async (req, res) => {
  * Get project by ID
  * GET /api/projects/:id
  */
-export const getProject = asyncHandler(async (req, res) => {
+const getProject = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const userId = req.user.id;
 
@@ -151,7 +151,7 @@ export const getProject = asyncHandler(async (req, res) => {
  * Update project
  * PUT /api/projects/:id
  */
-export const updateProject = asyncHandler(async (req, res) => {
+const updateProject = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { name, description } = req.body;
   const userId = req.user.id;
@@ -216,7 +216,7 @@ export const updateProject = asyncHandler(async (req, res) => {
  * Delete project
  * DELETE /api/projects/:id
  */
-export const deleteProject = asyncHandler(async (req, res) => {
+const deleteProject = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const userId = req.user.id;
 
@@ -242,3 +242,11 @@ export const deleteProject = asyncHandler(async (req, res) => {
 
   res.status(204).send();
 });
+
+module.exports = {
+  createProject,
+  getProjects,
+  getProject,
+  updateProject,
+  deleteProject
+};
