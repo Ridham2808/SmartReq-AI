@@ -1,188 +1,244 @@
 import prisma from '../config/db.js'
+import { asyncHandler } from '../middleware/errorHandler.js'
 
-export const createProject = async (req, res) => {
-  try {
-    const { name, description } = req.body
-    const ownerId = req.user.id
+/**
+ * Create a new project
+ * POST /api/projects
+ */
+export const createProject = asyncHandler(async (req, res) => {
+  const { name, description } = req.body;
+  const userId = req.user.id;
 
-    const project = await prisma.project.create({
-      data: {
-        name,
-        description,
-        ownerId
-      }
-    })
+  // Check if project name is unique for this user
+  const existingProject = await prisma.project.findFirst({
+    where: {
+      name,
+      ownerId: userId
+    }
+  });
 
-    res.status(201).json({
-      success: true,
-      message: 'Project created successfully',
-      data: { project }
-    })
-  } catch (error) {
-    console.error('Create project error:', error)
-    res.status(500).json({
+  if (existingProject) {
+    return res.status(400).json({
       success: false,
-      message: 'Failed to create project',
-      error: error.message
-    })
+      message: 'Project with this name already exists'
+    });
   }
-}
 
-export const getProjects = async (req, res) => {
-  try {
-    const ownerId = req.user.id
-    const { page = 1, limit = 10 } = req.query
+  // Create project
+  const project = await prisma.project.create({
+    data: {
+      name,
+      description: description || null,
+      ownerId: userId
+    },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      ownerId: true,
+      createdAt: true
+    }
+  });
 
-    const skip = (page - 1) * limit
-    const take = parseInt(limit)
+  res.status(201).json({
+    success: true,
+    message: 'Project created successfully',
+    data: { project }
+  });
+});
 
-    const [projects, total] = await Promise.all([
-      prisma.project.findMany({
-        where: { ownerId },
-        skip,
-        take,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          _count: {
-            select: { inputs: true, artifacts: true }
+/**
+ * Get all projects for current user
+ * GET /api/projects
+ */
+export const getProjects = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+  const { page = 1, limit = 10, search = '' } = req.query;
+
+  const skip = (parseInt(page) - 1) * parseInt(limit);
+  const take = parseInt(limit);
+
+  // Build where clause
+  const where = {
+    ownerId: userId
+  };
+
+  if (search) {
+    where.name = {
+      contains: search,
+      mode: 'insensitive'
+    };
+  }
+
+  // Get projects with pagination
+  const [projects, total] = await Promise.all([
+    prisma.project.findMany({
+      where,
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        createdAt: true,
+        _count: {
+          select: {
+            inputs: true,
+            artifacts: true
           }
         }
-      }),
-      prisma.project.count({ where: { ownerId } })
-    ])
+      },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take
+    }),
+    prisma.project.count({ where })
+  ]);
 
-    res.json({
-      success: true,
-      data: {
-        projects,
-        pagination: {
-          total,
-          page: parseInt(page),
-          limit: take,
-          totalPages: Math.ceil(total / take)
+  res.json({
+    success: true,
+    data: {
+      projects,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / parseInt(limit))
+      }
+    }
+  });
+});
+
+/**
+ * Get project by ID
+ * GET /api/projects/:id
+ */
+export const getProject = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user.id;
+
+  const project = await prisma.project.findFirst({
+    where: {
+      id: parseInt(id),
+      ownerId: userId
+    },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      createdAt: true,
+      _count: {
+        select: {
+          inputs: true,
+          artifacts: true
         }
       }
-    })
-  } catch (error) {
-    console.error('Get projects error:', error)
-    res.status(500).json({
-      success: false,
-      message: 'Failed to get projects',
-      error: error.message
-    })
-  }
-}
-
-export const getProject = async (req, res) => {
-  try {
-    const { id } = req.params
-    const ownerId = req.user.id
-
-    const project = await prisma.project.findFirst({
-      where: {
-        id: parseInt(id),
-        ownerId
-      },
-      include: {
-        inputs: true,
-        artifacts: true
-      }
-    })
-
-    if (!project) {
-      return res.status(404).json({
-        success: false,
-        message: 'Project not found'
-      })
     }
+  });
 
-    res.json({
-      success: true,
-      data: { project }
-    })
-  } catch (error) {
-    console.error('Get project error:', error)
-    res.status(500).json({
+  if (!project) {
+    return res.status(404).json({
       success: false,
-      message: 'Failed to get project',
-      error: error.message
-    })
+      message: 'Project not found'
+    });
   }
-}
 
-export const updateProject = async (req, res) => {
-  try {
-    const { id } = req.params
-    const { name, description } = req.body
-    const ownerId = req.user.id
+  res.json({
+    success: true,
+    data: { project }
+  });
+});
 
-    const project = await prisma.project.findFirst({
-      where: {
-        id: parseInt(id),
-        ownerId
-      }
-    })
+/**
+ * Update project
+ * PUT /api/projects/:id
+ */
+export const updateProject = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { name, description } = req.body;
+  const userId = req.user.id;
 
-    if (!project) {
-      return res.status(404).json({
-        success: false,
-        message: 'Project not found'
-      })
+  // Check if project exists and user owns it
+  const existingProject = await prisma.project.findFirst({
+    where: {
+      id: parseInt(id),
+      ownerId: userId
     }
+  });
 
-    const updatedProject = await prisma.project.update({
-      where: { id: parseInt(id) },
-      data: { name, description }
-    })
-
-    res.json({
-      success: true,
-      message: 'Project updated successfully',
-      data: { project: updatedProject }
-    })
-  } catch (error) {
-    console.error('Update project error:', error)
-    res.status(500).json({
+  if (!existingProject) {
+    return res.status(404).json({
       success: false,
-      message: 'Failed to update project',
-      error: error.message
-    })
+      message: 'Project not found'
+    });
   }
-}
 
-export const deleteProject = async (req, res) => {
-  try {
-    const { id } = req.params
-    const ownerId = req.user.id
-
-    const project = await prisma.project.findFirst({
+  // Check if new name is unique (if name is being changed)
+  if (name && name !== existingProject.name) {
+    const duplicateProject = await prisma.project.findFirst({
       where: {
-        id: parseInt(id),
-        ownerId
+        name,
+        ownerId: userId,
+        id: { not: parseInt(id) }
       }
-    })
+    });
 
-    if (!project) {
-      return res.status(404).json({
+    if (duplicateProject) {
+      return res.status(400).json({
         success: false,
-        message: 'Project not found'
-      })
+        message: 'Project with this name already exists'
+      });
     }
-
-    await prisma.project.delete({
-      where: { id: parseInt(id) }
-    })
-
-    res.json({
-      success: true,
-      message: 'Project deleted successfully'
-    })
-  } catch (error) {
-    console.error('Delete project error:', error)
-    res.status(500).json({
-      success: false,
-      message: 'Failed to delete project',
-      error: error.message
-    })
   }
-}
+
+  // Update project
+  const project = await prisma.project.update({
+    where: { id: parseInt(id) },
+    data: {
+      ...(name && { name }),
+      ...(description !== undefined && { description })
+    },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      ownerId: true,
+      createdAt: true
+    }
+  });
+
+  res.json({
+    success: true,
+    message: 'Project updated successfully',
+    data: { project }
+  });
+});
+
+/**
+ * Delete project
+ * DELETE /api/projects/:id
+ */
+export const deleteProject = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user.id;
+
+  // Check if project exists and user owns it
+  const project = await prisma.project.findFirst({
+    where: {
+      id: parseInt(id),
+      ownerId: userId
+    }
+  });
+
+  if (!project) {
+    return res.status(404).json({
+      success: false,
+      message: 'Project not found'
+    });
+  }
+
+  // Delete project (cascade delete will handle inputs and artifacts)
+  await prisma.project.delete({
+    where: { id: parseInt(id) }
+  });
+
+  res.status(204).send();
+});
