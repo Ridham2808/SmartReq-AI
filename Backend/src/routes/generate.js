@@ -1,16 +1,25 @@
-import { Router } from 'express'
-import { authenticateToken } from '../middleware/auth.js'
-import { generateArtifacts, getGenerationStatus } from '../controllers/generate.js'
-
-const router = Router()
+const express = require('express');
+const router = express.Router();
+const { 
+  generateArtifacts, 
+  getGenerationStatus 
+} = require('../controllers/generate');
+const { 
+  validate, 
+  validateQuery, 
+  generateSchema, 
+  paginationSchema 
+} = require('../middleware/validation');
+const { authenticateToken } = require('../middleware/auth');
 
 // All routes are protected
-router.use(authenticateToken)
+router.use(authenticateToken);
 
-// POST /api/projects/:projectId/generate
-router.post('/:projectId/generate', generateArtifacts)
+// POST(SSE) /api/projects/:projectId/generate
+// Uses Server-Sent Events to stream progress and final JSON
+router.post('/:projectId/generate', validate(generateSchema), generateArtifacts);
 
 // GET /api/projects/:projectId/generate/status
-router.get('/:projectId/generate/status', getGenerationStatus)
+router.get('/:projectId/generate/status', getGenerationStatus);
 
-export default router
+module.exports = router;
