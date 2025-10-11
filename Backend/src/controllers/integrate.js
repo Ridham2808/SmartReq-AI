@@ -1,8 +1,8 @@
-import JiraApi from 'jira-client'
-import prisma from '../config/db.js'
-import { asyncHandler } from '../middleware/errorHandler.js'
-import crypto from 'crypto'
-import config from '../config/env.js'
+const JiraApi = require('jira-client');
+const prisma = require('../config/db');
+const { asyncHandler } = require('../middleware/errorHandler');
+const crypto = require('crypto');
+const config = require('../config/env');
 
 /**
  * Encrypt sensitive data
@@ -303,3 +303,9 @@ export const getIntegrationStatus = asyncHandler(async (req, res) => {
     }
   });
 });
+
+module.exports = {
+  syncToJira,
+  testJiraConnection,
+  getIntegrationStatus
+};
