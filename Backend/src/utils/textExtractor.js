@@ -1,92 +1,51 @@
-import fs from 'fs'
-import path from 'path'
+const fs = require('fs')
+const path = require('path')
 
-export const extractTextFromPDF = async (filePath) => {
+let pdfParse = null
+try { pdfParse = require('pdf-parse') } catch (_) {}
+
+function stripPII(text) {
+  if (!text) return ''
+  return String(text)
+    .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, '[redacted-email]')
+    .replace(/\b\+?\d[\d\-()\s]{6,}\b/g, '[redacted-phone]')
+}
+
+async function extractTextFromFile(filePath) {
+  if (!filePath) return ''
+  const ext = path.extname(filePath).toLowerCase()
   try {
-    console.log('Extracting text from PDF:', filePath)
-    
-    // Mock PDF extraction - will be replaced with pdf-parse
-    const mockText = `
-      Requirements Document
-      
-      1. User Authentication
-      - Users shall be able to register with email and password
-      - Users shall be able to login with credentials
-      - System shall verify email addresses
-      
-      2. Project Management
-      - Users shall be able to create projects
-      - Users shall be able to add requirements to projects
-      - System shall generate user stories automatically
-    `
-    
-    return {
-      success: true,
-      text: mockText.trim(),
-      pageCount: 1,
-      metadata: {
-        fileName: path.basename(filePath),
-        fileSize: fs.existsSync(filePath) ? fs.statSync(filePath).size : 0
-      }
+    if (ext === '.pdf' && pdfParse) {
+      const data = await pdfParse(fs.readFileSync(filePath))
+      return data.text || ''
     }
-  } catch (error) {
-    console.error('Extract text from PDF error:', error)
-    throw error
+    return fs.readFileSync(filePath, 'utf8')
+  } catch (_) {
+    return ''
   }
 }
 
-export const extractTextFromAudio = async (filePath) => {
-  try {
-    console.log('Extracting text from audio:', filePath)
-    
-    // Mock speech-to-text - will be replaced with Google STT or Whisper
-    const mockTranscription = `
-      I need a system that allows users to register and login.
-      The system should have email verification.
-      Users should be able to create projects and add requirements.
-      The system should automatically generate user stories from the requirements.
-    `
-    
-    return {
-      success: true,
-      text: mockTranscription.trim(),
-      confidence: 0.92,
-      duration: 45.5,
-      metadata: {
-        fileName: path.basename(filePath),
-        fileSize: fs.existsSync(filePath) ? fs.statSync(filePath).size : 0
-      }
+function chunkText(text, tokensPerChunk = 500) {
+  const words = String(text).split(/\s+/)
+  const chunks = []
+  let current = []
+  let count = 0
+  for (const w of words) {
+    current.push(w)
+    count += 1
+    if (count >= tokensPerChunk) {
+      chunks.push(current.join(' '))
+      current = []
+      count = 0
     }
-  } catch (error) {
-    console.error('Extract text from audio error:', error)
-    throw error
   }
+  if (current.length) chunks.push(current.join(' '))
+  return chunks
 }
 
-export const extractTextFromImage = async (filePath) => {
-  try {
-    console.log('Extracting text from image:', filePath)
-    
-    // Mock OCR - will be replaced with Tesseract.js or Google Vision
-    const mockText = `
-      System Requirements:
-      - User registration
-      - Email verification
-      - Project creation
-      - Requirement management
-    `
-    
-    return {
-      success: true,
-      text: mockText.trim(),
-      confidence: 0.88,
-      metadata: {
-        fileName: path.basename(filePath),
-        fileSize: fs.existsSync(filePath) ? fs.statSync(filePath).size : 0
-      }
-    }
-  } catch (error) {
-    console.error('Extract text from image error:', error)
-    throw error
-  }
+module.exports = {
+  stripPII,
+  extractTextFromFile,
+  chunkText,
 }
+
