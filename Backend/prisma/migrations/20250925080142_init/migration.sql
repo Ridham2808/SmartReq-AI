@@ -1,4 +1,4 @@
-
+-- CreateEnum
 CREATE TYPE "InputType" AS ENUM ('text', 'voice', 'document');
 
 -- CreateEnum
