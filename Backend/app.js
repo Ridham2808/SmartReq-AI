@@ -31,7 +31,11 @@ const envOrigins = (config.CORS_ORIGIN || '')
   .filter(Boolean);
 const defaultOrigins = [
   'http://localhost:3000',
-  'http://localhost:3001'
+  'http://localhost:3001',
+  'https://smart-req-ai.vercel.app',
+  'https://smartreq-ai.vercel.app',
+  'https://smart-req-ai-frontend.vercel.app',
+  'https://smart-req-ai-wnj9.vercel.app' // preview/deploy domain
 ];
 const allowedOrigins = Array.from(new Set([...defaultOrigins, ...envOrigins]));
 
