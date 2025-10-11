@@ -1,5 +1,5 @@
-import winston from 'winston'
-import { config } from '../config/env.js'
+const winston = require('winston');
+const config = require('../config/env');
 
 // Create logger instance
 const logger = winston.createLogger({
@@ -27,7 +27,7 @@ if (config.NODE_ENV !== 'production') {
 }
 
 // Global error handler middleware
-export const errorHandler = (err, req, res, next) => {
+const errorHandler = (err, req, res, next) => {
   let error = { ...err };
   error.message = err.message;
 
@@ -157,15 +157,20 @@ export const errorHandler = (err, req, res, next) => {
 };
 
 // 404 handler
-export const notFound = (req, res, next) => {
+const notFound = (req, res, next) => {
   const error = new Error(`Not Found - ${req.originalUrl}`);
   res.status(404);
   next(error);
 };
 
 // Async error handler wrapper
-export const asyncHandler = (fn) => (req, res, next) => {
+const asyncHandler = (fn) => (req, res, next) => {
   Promise.resolve(fn(req, res, next)).catch(next);
 };
 
-export { logger };
+module.exports = {
+  errorHandler,
+  notFound,
+  asyncHandler,
+  logger
+};
