@@ -1,4 +1,5 @@
-// Prisma schema
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
   provider = "prisma-client-js"
@@ -10,51 +11,72 @@ datasource db {
 }
 
 model User {
-  id        Int       @id @default(autoincrement())
+  id        Int      @id @default(autoincrement())
   name      String
-  email     String    @unique
+  email     String   @unique
   password  String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  isVerified Boolean @default(false)
+  verificationCode String?
+  verificationExpiry DateTime?
+  resetCode String?
+  resetExpiry DateTime?
+  createdAt DateTime @default(now())
+  
+  // Relations
   projects  Project[]
-
+  
   @@map("users")
 }
 
 model Project {
-  id          Int        @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   name        String
   description String?
   ownerId     Int
-  owner       User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  inputs      Input[]
-  artifacts   Artifact[]
-
+  createdAt   DateTime @default(now())
+  
+  // Relations
+  owner   User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  inputs  Input[]
+  artifacts Artifact[]
+  
   @@map("projects")
 }
 
 model Input {
   id        Int      @id @default(autoincrement())
   projectId Int
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  type      String   // 'text', 'voice', 'document'
+  type      InputType
   content   String?  // For text or processed text
   filePath  String?  // For uploaded files
   createdAt DateTime @default(now())
-
+  
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
   @@map("inputs")
 }
 
 model Artifact {
-  id        Int      @id @default(autoincrement())
+  id        Int         @id @default(autoincrement())
   projectId Int
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  type      String   // 'story', 'flow'
-  content   Json     // For flow or string for story
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
+  type      ArtifactType
+  content   Json        // For flow JSON or story string
+  createdAt DateTime    @default(now())
+  
+  // Relations
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
   @@map("artifacts")
+}
+
+enum InputType {
+  text
+  voice
+  document
+}
+
+enum ArtifactType {
+  story
+  flow
 }
