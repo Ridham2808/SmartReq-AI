@@ -142,16 +142,6 @@ const jiraIntegrationSchema = Joi.object({
   })
 });
 
-// Chat validation schemas
-const chatSchema = Joi.object({
-  message: Joi.string().min(1).max(2000).required().messages({
-    'string.min': 'Message cannot be empty',
-    'string.max': 'Message must not exceed 2000 characters',
-    'any.required': 'Message is required'
-  }),
-  context: Joi.array().items(Joi.object()).optional()
-});
-
 // Validation middleware factory
 const validate = (schema) => {
   return (req, res, next) => {
@@ -230,6 +220,5 @@ module.exports = {
   generateSchema,
   artifactUpdateSchema,
   jiraIntegrationSchema,
-  chatSchema,
   paginationSchema
 };
