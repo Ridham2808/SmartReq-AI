@@ -1,198 +1,233 @@
 import prisma from '../config/db.js'
-import { deleteFile } from '../utils/fileUtils.js'
-import path from 'path'
+import { asyncHandler } from '../middleware/errorHandler.js'
+import { processUploadedFile, deleteFile } from '../utils/fileUtils.js'
 
-export const createInput = async (req, res) => {
-  try {
-    const { projectId } = req.params
-    const { type, content } = req.body
-    const ownerId = req.user.id
+/**
+ * Create a new input
+ * POST /api/projects/:projectId/inputs
+ */
+export const createInput = asyncHandler(async (req, res) => {
+  const { projectId } = req.params;
+  const { type, content } = req.body;
+  const userId = req.user.id;
 
-    // Verify project ownership
-    const project = await prisma.project.findFirst({
-      where: {
-        id: parseInt(projectId),
-        ownerId
-      }
-    })
-
-    if (!project) {
-      return res.status(404).json({
-        success: false,
-        message: 'Project not found'
-      })
+  // Verify project exists and user owns it
+  const project = await prisma.project.findFirst({
+    where: {
+      id: parseInt(projectId),
+      ownerId: userId
     }
+  });
 
-    const inputData = {
-      projectId: parseInt(projectId),
-      type,
-      content: type === 'text' ? content : null,
-      filePath: req.file ? req.file.path : null
-    }
-
-    const input = await prisma.input.create({
-      data: inputData
-    })
-
-    res.status(201).json({
-      success: true,
-      message: 'Input created successfully',
-      data: { input }
-    })
-  } catch (error) {
-    console.error('Create input error:', error)
-    res.status(500).json({
+  if (!project) {
+    return res.status(404).json({
       success: false,
-      message: 'Failed to create input',
-      error: error.message
-    })
+      message: 'Project not found'
+    });
   }
-}
 
-export const getInputs = async (req, res) => {
-  try {
-    const { projectId } = req.params
-    const ownerId = req.user.id
+  let inputData = {
+    projectId: parseInt(projectId),
+    type,
+    content: null,
+    filePath: null
+  };
 
-    // Verify project ownership
-    const project = await prisma.project.findFirst({
-      where: {
-        id: parseInt(projectId),
-        ownerId
-      }
-    })
+  // Handle different input types
+  if (type === 'text') {
+    inputData.content = content;
+  } else if (type === 'voice' || type === 'document') {
+    // Process uploaded file
+    const fileInfo = await processUploadedFile(req.file, type);
+    inputData.filePath = fileInfo.path;
+    inputData.content = fileInfo.processedText || null;
+  }
 
-    if (!project) {
-      return res.status(404).json({
-        success: false,
-        message: 'Project not found'
-      })
+  // Create input
+  const input = await prisma.input.create({
+    data: inputData,
+    select: {
+      id: true,
+      type: true,
+      content: true,
+      filePath: true,
+      createdAt: true
     }
+  });
 
-    const inputs = await prisma.input.findMany({
-      where: { projectId: parseInt(projectId) },
-      orderBy: { createdAt: 'desc' }
-    })
+  res.status(201).json({
+    success: true,
+    message: 'Input created successfully',
+    data: { input }
+  });
+});
 
-    res.json({
-      success: true,
-      data: { inputs }
-    })
-  } catch (error) {
-    console.error('Get inputs error:', error)
-    res.status(500).json({
+/**
+ * Get all inputs for a project
+ * GET /api/projects/:projectId/inputs
+ */
+export const getInputs = asyncHandler(async (req, res) => {
+  const { projectId } = req.params;
+  const { type, page = 1, limit = 10 } = req.query;
+  const userId = req.user.id;
+
+  // Verify project exists and user owns it
+  const project = await prisma.project.findFirst({
+    where: {
+      id: parseInt(projectId),
+      ownerId: userId
+    }
+  });
+
+  if (!project) {
+    return res.status(404).json({
       success: false,
-      message: 'Failed to get inputs',
-      error: error.message
-    })
+      message: 'Project not found'
+    });
   }
-}
 
-export const getInput = async (req, res) => {
-  try {
-    const { projectId, inputId } = req.params
-    const ownerId = req.user.id
+  const skip = (parseInt(page) - 1) * parseInt(limit);
+  const take = parseInt(limit);
 
-    // Verify project ownership
-    const project = await prisma.project.findFirst({
-      where: {
-        id: parseInt(projectId),
-        ownerId
+  // Build where clause
+  const where = {
+    projectId: parseInt(projectId)
+  };
+
+  if (type) {
+    where.type = type;
+  }
+
+  // Get inputs with pagination
+  const [inputs, total] = await Promise.all([
+    prisma.input.findMany({
+      where,
+      select: {
+        id: true,
+        type: true,
+        content: true,
+        filePath: true,
+        createdAt: true
+      },
+      orderBy: { createdAt: 'desc' },
+      skip,
+      take
+    }),
+    prisma.input.count({ where })
+  ]);
+
+  res.json({
+    success: true,
+    data: {
+      inputs,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / parseInt(limit))
       }
-    })
-
-    if (!project) {
-      return res.status(404).json({
-        success: false,
-        message: 'Project not found'
-      })
     }
+  });
+});
 
-    const input = await prisma.input.findFirst({
-      where: {
-        id: parseInt(inputId),
-        projectId: parseInt(projectId)
-      }
-    })
+/**
+ * Get input by ID
+ * GET /api/projects/:projectId/inputs/:inputId
+ */
+export const getInput = asyncHandler(async (req, res) => {
+  const { projectId, inputId } = req.params;
+  const userId = req.user.id;
 
-    if (!input) {
-      return res.status(404).json({
-        success: false,
-        message: 'Input not found'
-      })
+  // Verify project exists and user owns it
+  const project = await prisma.project.findFirst({
+    where: {
+      id: parseInt(projectId),
+      ownerId: userId
     }
+  });
 
-    res.json({
-      success: true,
-      data: { input }
-    })
-  } catch (error) {
-    console.error('Get input error:', error)
-    res.status(500).json({
+  if (!project) {
+    return res.status(404).json({
       success: false,
-      message: 'Failed to get input',
-      error: error.message
-    })
+      message: 'Project not found'
+    });
   }
-}
 
-export const deleteInput = async (req, res) => {
-  try {
-    const { projectId, inputId } = req.params
-    const ownerId = req.user.id
-
-    // Verify project ownership
-    const project = await prisma.project.findFirst({
-      where: {
-        id: parseInt(projectId),
-        ownerId
-      }
-    })
-
-    if (!project) {
-      return res.status(404).json({
-        success: false,
-        message: 'Project not found'
-      })
+  // Get input
+  const input = await prisma.input.findFirst({
+    where: {
+      id: parseInt(inputId),
+      projectId: parseInt(projectId)
+    },
+    select: {
+      id: true,
+      type: true,
+      content: true,
+      filePath: true,
+      createdAt: true
     }
+  });
 
-    const input = await prisma.input.findFirst({
-      where: {
-        id: parseInt(inputId),
-        projectId: parseInt(projectId)
-      }
-    })
-
-    if (!input) {
-      return res.status(404).json({
-        success: false,
-        message: 'Input not found'
-      })
-    }
-
-    // Delete file if exists
-    if (input.filePath) {
-      try {
-        await deleteFile(input.filePath)
-      } catch (error) {
-        console.error('Error deleting file:', error)
-      }
-    }
-
-    await prisma.input.delete({
-      where: { id: parseInt(inputId) }
-    })
-
-    res.json({
-      success: true,
-      message: 'Input deleted successfully'
-    })
-  } catch (error) {
-    console.error('Delete input error:', error)
-    res.status(500).json({
+  if (!input) {
+    return res.status(404).json({
       success: false,
-      message: 'Failed to delete input',
-      error: error.message
-    })
+      message: 'Input not found'
+    });
   }
-}
+
+  res.json({
+    success: true,
+    data: { input }
+  });
+});
+
+/**
+ * Delete input
+ * DELETE /api/projects/:projectId/inputs/:inputId
+ */
+export const deleteInput = asyncHandler(async (req, res) => {
+  const { projectId, inputId } = req.params;
+  const userId = req.user.id;
+
+  // Verify project exists and user owns it
+  const project = await prisma.project.findFirst({
+    where: {
+      id: parseInt(projectId),
+      ownerId: userId
+    }
+  });
+
+  if (!project) {
+    return res.status(404).json({
+      success: false,
+      message: 'Project not found'
+    });
+  }
+
+  // Get input to check file path
+  const input = await prisma.input.findFirst({
+    where: {
+      id: parseInt(inputId),
+      projectId: parseInt(projectId)
+    }
+  });
+
+  if (!input) {
+    return res.status(404).json({
+      success: false,
+      message: 'Input not found'
+    });
+  }
+
+  // Delete associated file if exists
+  if (input.filePath) {
+    await deleteFile(input.filePath);
+  }
+
+  // Delete input
+  await prisma.input.delete({
+    where: { id: parseInt(inputId) }
+  });
+
+  res.status(204).send();
+});
