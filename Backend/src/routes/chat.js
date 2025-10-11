@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { authenticateToken } from '../middleware/auth.js'
 import { chatHandler } from '../controllers/chat.js'
+import { validateRequest, chatSchema } from '../middleware/validation.js'
 
 const router = Router()
 
@@ -8,6 +9,6 @@ const router = Router()
 router.use(authenticateToken)
 
 // POST /api/chat
-router.post('/', chatHandler)
+router.post('/', validateRequest(chatSchema), chatHandler)
 
 export default router
