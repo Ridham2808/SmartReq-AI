@@ -1,6 +1,6 @@
-import { logger } from '../middleware/errorHandler.js';
-import sgMail from '@sendgrid/mail';
-import config from '../config/env.js';
+const { logger } = require('../middleware/errorHandler');
+const sgMail = require('@sendgrid/mail');
+const config = require('../config/env');
 
 // Generate unique verification code
 const generateVerificationCode = () => {
@@ -214,7 +214,7 @@ const testEmailConfiguration = async () => {
   }
 };
 
-export {
+module.exports = {
   generateVerificationCode,
   sendVerificationEmail,
   sendPasswordResetEmail,
