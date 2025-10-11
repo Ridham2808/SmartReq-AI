@@ -1,194 +1,142 @@
 'use client'
-import { motion } from 'framer-motion'
-import Link from 'next/link'
+import { useEffect, useMemo, useState } from 'react'
+import { io } from 'socket.io-client'
+import { useAuthStore } from '@/hooks/useAuth'
+import { useProjectsQuery, useCreateProject } from '@/hooks/useProjectsQuery'
+import ProjectCard from '@/components/ProjectCard'
+import AuthDebugger from '@/components/AuthDebugger'
+import { Modal, Form, Input, Button } from 'antd'
+import FloatingAssistant from '@/components/FloatingAssistant'
+import OcrWidget from '@/components/OcrWidget'
+import { useRouter } from 'next/navigation'
 
-export default function HomePage(){
+export default function DashboardPage(){
+  const router = useRouter()
+  const token = useAuthStore(s => s.token)
+  const user = useAuthStore(s => s.user)
+  const { data, isLoading } = useProjectsQuery()
+  const createMutation = useCreateProject()
+  const [open, setOpen] = useState(false)
+  const [ocrOpen, setOcrOpen] = useState(false)
+  const [form] = Form.useForm()
+
+  // Debug auth state on dashboard load
+  useEffect(() => {
+    console.log('🏠 Dashboard loaded - Auth state:', {
+      hasUser: !!user,
+      hasToken: !!token,
+      tokenPreview: token ? `${token.substring(0, 20)}...` : 'No token',
+      userEmail: user?.email
+    })
+  }, [])
+
+  useEffect(() => {
+    if (!token) {
+      console.log('❌ No token found - redirecting to login')
+      router.replace('/auth/login')
+    }
+  }, [token, router])
+
+  useEffect(() => {
+    const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL || process.env.NEXT_PUBLIC_API_URL, { auth: { token } })
+    socket.on('project-updated', () => {})
+    return () => socket.disconnect()
+  }, [token])
+
+  const projects = Array.isArray(data) ? data : []
+
+  const onCreate = async () => {
+    const values = await form.validateFields()
+    await createMutation.mutateAsync(values)
+    setOpen(false)
+    form.resetFields()
+  }
+
   return (
-    <main className="container mx-auto px-4 py-12 max-w-7xl">
-      {/* Hero Section */}
-      <section className="grid lg:grid-cols-2 gap-16 items-center mb-24">
-        <div className="space-y-6">
-          <motion.h1
-            initial={{opacity:0,y:20}}
-            animate={{opacity:1,y:0}}
-            className="text-5xl lg:text-6xl font-bold tracking-tight leading-tight bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"
-          >
-            Welcome to SmartReq AI
-          </motion.h1>
-          <motion.p
-            initial={{opacity:0}}
-            animate={{opacity:1}}
-            transition={{delay:0.1}}
-            className="text-xl text-gray-600 leading-relaxed"
-          >
-            Transform weeks of requirement gathering into hours. From stakeholder inputs to instant user stories and process flows—powered by AI.
-          </motion.p>
-          <motion.div
-            initial={{opacity:0}}
-            animate={{opacity:1}}
-            transition={{delay:0.2}}
-            className="flex flex-col sm:flex-row gap-4 pt-4"
-          >
-            <Link href="/auth/register" className="px-8 py-4 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white text-center font-semibold hover:shadow-xl hover:scale-105 transition-all duration-300">
-              Start Free Trial
-            </Link>
-            <Link href="/features" className="px-8 py-4 rounded-xl border-2 border-gray-200 text-center font-semibold hover:border-blue-600 hover:bg-blue-50 transition-all duration-300">
-              See How It Works
-            </Link>
-          </motion.div>
-          <div className="flex items-center gap-6 pt-6">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-blue-600">47%</div>
-              <div className="text-sm text-gray-600">Faster Delivery</div>
-            </div>
-            <div className="w-px h-12 bg-gray-200"></div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-purple-600">500+</div>
-              <div className="text-sm text-gray-600">Teams Using</div>
-            </div>
-            <div className="w-px h-12 bg-gray-200"></div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-indigo-600">40%</div>
-              <div className="text-sm text-gray-600">Fewer Errors</div>
-            </div>
-          </div>
+    <main className="container mx-auto px-4 py-6 sm:py-8">
+      {/* Temporary Debug Component */}
+      <AuthDebugger />
+      
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 sm:mb-8 gap-4">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-semibold">Projects</h1>
+          <p className="text-gray-600 mt-1">Manage your requirements projects</p>
         </div>
-        
-        <motion.div
-          initial={{opacity:0,scale:0.95}}
-          animate={{opacity:1,scale:1}}
-          transition={{delay:0.3}}
-          className="rounded-2xl border-2 border-gray-100 p-8 bg-gradient-to-br from-blue-50 to-purple-50 shadow-xl"
+        <Button 
+          type="primary" 
+          onClick={() => setOpen(true)}
+          className="w-full sm:w-auto"
+          size="large"
         >
-          <div className="grid grid-cols-1 gap-4">
-            {[
-              {icon: '🎙️', title: 'Voice Input', desc: 'Dictate requirements naturally'},
-              {icon: '📄', title: 'Document Upload', desc: 'Parse any format instantly'},
-              {icon: '⚡', title: 'AI Generation', desc: 'Stories & flows in seconds'}
-            ].map((item)=> (
-              <div key={item.title} className="rounded-xl bg-white p-6 hover:shadow-lg transition-all duration-300 border border-gray-100">
-                <div className="text-3xl mb-2">{item.icon}</div>
-                <h3 className="font-semibold text-lg mb-1">{item.title}</h3>
-                <p className="text-sm text-gray-600">{item.desc}</p>
-              </div>
-            ))}
+          New Project
+        </Button>
+      </div>
+      {isLoading ? (
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      ) : Array.isArray(projects) && projects.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+          {projects.map(p => <ProjectCard key={p.id} project={p} />)}
+        </div>
+      ) : (
+        <div className="text-center py-12">
+          <div className="max-w-md mx-auto">
+            <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No projects found</h3>
+            <p className="text-gray-500 mb-4">Create your first project to get started</p>
+            <Button type="primary" onClick={() => setOpen(true)}>
+              Create Project
+            </Button>
+            <p className="text-sm text-gray-400 mt-4">
+              Data type: {typeof data}, Is Array: {Array.isArray(data) ? 'Yes' : 'No'}
+            </p>
           </div>
-        </motion.div>
-      </section>
+        </div>
+      )}
 
-      {/* Problem Section */}
-      <section className="mb-24">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold mb-4">The Challenge</h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Traditional requirement gathering is slow, error-prone, and frustrating for teams
-          </p>
-        </div>
-        <div className="grid md:grid-cols-3 gap-8">
-          {[
-            {title: 'Time-Consuming', desc: 'Weeks spent on interviews and documentation', stat: '70%', label: 'Over-budget projects'},
-            {title: 'Error-Prone', desc: 'Manual processes lead to ambiguities and mistakes', stat: '40%', label: 'Requirement errors'},
-            {title: 'Poor Collaboration', desc: 'Endless revision loops and miscommunication', stat: '30%', label: 'Wasted time'}
-          ].map((item)=> (
-            <div key={item.title} className="rounded-2xl border-2 border-gray-100 p-8 hover:border-blue-300 hover:shadow-xl transition-all duration-300 bg-white">
-              <div className="text-5xl font-bold text-red-500 mb-3">{item.stat}</div>
-              <h3 className="font-bold text-xl mb-3">{item.title}</h3>
-              <p className="text-gray-600 mb-2">{item.desc}</p>
-              <p className="text-sm text-gray-500 italic">{item.label}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Solution Section */}
-      <section className="mb-24 bg-gradient-to-br from-blue-50 to-purple-50 rounded-3xl p-12">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold mb-4">The SmartReq AI Solution</h2>
-          <p className="text-xl text-gray-700 max-w-3xl mx-auto">
-            AI-powered platform that automates every step of requirement gathering
-          </p>
-        </div>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[
-            {icon: '🎯', title: 'Smart Input', desc: 'Voice, text, or documents—we handle it all'},
-            {icon: '🤖', title: 'AI Generation', desc: 'Instant Gherkin stories and JSON flows'},
-            {icon: '✏️', title: 'Interactive Editing', desc: 'Drag-and-drop visual editor'},
-            {icon: '🔗', title: 'Integrations', desc: 'Auto-sync with Jira and tools'},
-            {icon: '📊', title: 'Analytics', desc: 'Predict gaps and compliance issues'},
-            {icon: '🚀', title: 'Fast Results', desc: 'Hours instead of weeks'}
-          ].map((item)=> (
-            <div key={item.title} className="rounded-xl bg-white p-6 hover:shadow-lg transition-all duration-300 border border-gray-100">
-              <div className="text-4xl mb-3">{item.icon}</div>
-              <h3 className="font-bold text-lg mb-2">{item.title}</h3>
-              <p className="text-gray-600">{item.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* How It Works */}
-      <section className="mb-24">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold mb-4">How It Works</h2>
-          <p className="text-xl text-gray-600">Simple 4-step process to transform your workflow</p>
-        </div>
-        <div className="grid md:grid-cols-4 gap-6">
-          {[
-            {num: '1', title: 'Capture', desc: 'Record voice or upload documents', color: 'from-blue-500 to-blue-600'},
-            {num: '2', title: 'Generate', desc: 'AI creates stories and flows instantly', color: 'from-purple-500 to-purple-600'},
-            {num: '3', title: 'Edit', desc: 'Collaborate on interactive canvas', color: 'from-indigo-500 to-indigo-600'},
-            {num: '4', title: 'Deploy', desc: 'Push to Jira and start building', color: 'from-pink-500 to-pink-600'}
-          ].map((step)=> (
-            <div key={step.num} className="text-center">
-              <div className={`w-16 h-16 rounded-full bg-gradient-to-r ${step.color} text-white flex items-center justify-center text-2xl font-bold mx-auto mb-4 shadow-lg`}>
-                {step.num}
+      {/* Tools section */}
+      <section className="mt-10">
+        <h2 className="text-xl font-semibold mb-3">Tools</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <button
+            onClick={() => setOcrOpen(true)}
+            className="group block rounded-xl border border-gray-200 hover:border-indigo-300 hover:shadow-md transition bg-white p-4"
+          >
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h7l2 2h6a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V4z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 13h8M8 9h5M8 17h4" />
+                </svg>
               </div>
-              <h3 className="font-bold text-lg mb-2">{step.title}</h3>
-              <p className="text-gray-600">{step.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section className="mb-24">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold mb-4">Loved by Teams</h2>
-          <p className="text-xl text-gray-600">Real results from real users</p>
-        </div>
-        <div className="grid md:grid-cols-3 gap-8">
-          {[
-            {quote: 'Made our KYC project 80% faster. The compliance team was impressed!', author: 'Raj Patel', role: 'Fintech PM'},
-            {quote: 'Voice input is a game-changer. Now I focus on creative solutions instead of typing.', author: 'Priya Sharma', role: 'Business Analyst'},
-            {quote: 'Jira integration is seamless. Projects finish weeks ahead of schedule.', author: 'Ahmed Khan', role: 'Dev Lead'}
-          ].map((testimonial)=> (
-            <div key={testimonial.author} className="rounded-2xl bg-white border-2 border-gray-100 p-8 hover:border-blue-300 hover:shadow-xl transition-all duration-300">
-              <div className="text-4xl mb-4">💬</div>
-              <p className="text-gray-700 italic mb-6">"{testimonial.quote}"</p>
-              <div>
-                <div className="font-bold">{testimonial.author}</div>
-                <div className="text-sm text-gray-600">{testimonial.role}</div>
+              <div className="flex-1">
+                <h3 className="font-medium text-gray-900">OCR File Extractor</h3>
+                <p className="text-sm text-gray-600">Upload image or PDF, extract text using Tesseract.js.</p>
+                <span className="inline-block mt-2 text-xs text-indigo-600 group-hover:underline">Open in-page</span>
               </div>
             </div>
-          ))}
+          </button>
         </div>
       </section>
 
-      {/* Final CTA */}
-      <section className="rounded-3xl bg-gradient-to-r from-blue-600 to-purple-600 p-12 text-center text-white">
-        <h2 className="text-4xl font-bold mb-4">Ready to Transform Your Workflow?</h2>
-        <p className="text-xl mb-8 max-w-2xl mx-auto opacity-90">
-          Join 500+ teams already saving time and delivering better results with AI
-        </p>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Link href="/auth/register" className="px-8 py-4 rounded-xl bg-white text-blue-600 font-bold hover:shadow-2xl hover:scale-105 transition-all duration-300">
-            Start Free Trial
-          </Link>
-          <Link href="/features" className="px-8 py-4 rounded-xl border-2 border-white text-white font-bold hover:bg-white hover:text-blue-600 transition-all duration-300">
-            Schedule Demo
-          </Link>
-        </div>
-      </section>
+      <Modal title="Create Project" open={open} onOk={onCreate} onCancel={() => setOpen(false)} confirmLoading={createMutation.isPending}>
+        <Form layout="vertical" form={form}>
+          <Form.Item name="name" label="Name" rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="description" label="Description">
+            <Input.TextArea rows={3} />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      <FloatingAssistant />
+      <OcrWidget open={ocrOpen} onClose={() => setOcrOpen(false)} />
     </main>
   )
 }

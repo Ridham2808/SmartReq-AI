@@ -39,7 +39,8 @@ export default function ProjectDetailPage() {
     queryKey: ['project', projectId],
     queryFn: async () => {
       const { data } = await api.get(`/api/projects/${projectId}`)
-      return data
+      const normalized = (data?.data?.project) || (data?.project) || (data?.data) || data
+      return normalized
     },
     enabled: !!projectId
   })
@@ -109,7 +110,7 @@ export default function ProjectDetailPage() {
           if (Array.isArray(inputs)) return inputs.length > 0
           if (Array.isArray(inputs?.data)) return inputs.data.length > 0
           if (inputs?.success && Array.isArray(inputs?.data?.items)) return inputs.data.items.length > 0
-        } catch (_) {}
+        } catch (_) { }
         return Boolean(inputs)
       })()
       if (!hasInputs) {
@@ -123,7 +124,7 @@ export default function ProjectDetailPage() {
       console.log('Remote URL:', remoteUrl)
       console.log('Project ID:', projectId)
       console.log('Token:', token ? 'Present' : 'Missing')
-      
+
       // Wire abort controller so timeout can cancel the request/reader
       const abortController = new AbortController()
       let timedOut = false
@@ -146,7 +147,7 @@ export default function ProjectDetailPage() {
           try {
             const j = JSON.parse(text || '{}')
             msg = j?.message || msg
-          } catch (_) {}
+          } catch (_) { }
           if (resp.status === 400) {
             toast.error(`${msg}. Add an input to the backend project, then retry.`)
           } else {
@@ -205,7 +206,7 @@ export default function ProjectDetailPage() {
       // Absolute timeout: ensure completion within ~30s; report timeout (no mock)
       const absoluteTimeout = setTimeout(async () => {
         timedOut = true
-        try { abortController.abort() } catch (_) {}
+        try { abortController.abort() } catch (_) { }
         stopSynthetic()
         toast.error('Generation timed out. Please try again.')
         setIsGenerating(false)
@@ -229,7 +230,7 @@ export default function ProjectDetailPage() {
                 setProgressPercent(data.percent)
                 lastProgressAt = Date.now()
               }
-            } catch (_) {}
+            } catch (_) { }
           } else if (evt === 'complete') {
             try {
               const data = JSON.parse(dataLine)
@@ -250,24 +251,24 @@ export default function ProjectDetailPage() {
         }
       }
 
-      ;(async () => {
-        try {
-          while (true) {
-            const { value, done } = await reader.read()
-            if (done) break
-            buffer += decoder.decode(value, { stream: true })
-            await processChunk()
-            // If no progress after 5s, start synthetic progress
-            if (Date.now() - lastProgressAt > 5000) startSynthetic()
+        ; (async () => {
+          try {
+            while (true) {
+              const { value, done } = await reader.read()
+              if (done) break
+              buffer += decoder.decode(value, { stream: true })
+              await processChunk()
+              // If no progress after 5s, start synthetic progress
+              if (Date.now() - lastProgressAt > 5000) startSynthetic()
+            }
+          } catch (e) {
+            if (!timedOut) toast.error('Generation error')
+          } finally {
+            stopSynthetic()
+            clearTimeout(absoluteTimeout)
+            setIsGenerating(false)
           }
-        } catch (e) {
-          if (!timedOut) toast.error('Generation error')
-        } finally {
-          stopSynthetic()
-          clearTimeout(absoluteTimeout)
-          setIsGenerating(false)
-        }
-      })()
+        })()
     } catch (error) {
       toast.error(`Generation failed: ${error.message}`)
       setIsGenerating(false)
@@ -339,7 +340,7 @@ export default function ProjectDetailPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="text-center max-w-md">
-          <div className="text-6xl mb-4">⚠️</div>
+          <div className="text-6xl mb-4">⚠</div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Error Loading Project</h2>
           <p className="text-gray-600">{projectError.message}</p>
         </div>
@@ -348,14 +349,14 @@ export default function ProjectDetailPage() {
   }
 
   return (
-    <motion.main 
+    <motion.main
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       className="min-h-screen bg-white py-8"
     >
       <div className="container mx-auto px-4 max-w-7xl space-y-8">
         {/* Header */}
-        <motion.div 
+        <motion.div
           initial={{ y: -20 }}
           animate={{ y: 0 }}
           className="border-2 border-black rounded-3xl p-8"
@@ -363,53 +364,53 @@ export default function ProjectDetailPage() {
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
             <div className="flex-1">
               <h1 className="text-4xl font-bold text-black mb-2">
-            {project?.name || `Project #${projectId}`}
-          </h1>
-          {project?.description && (
+                {project?.name?.trim?.() || `Project #${projectId}`}
+              </h1>
+              {project?.description && (
                 <p className="text-gray-700 text-lg">{project.description}</p>
-          )}
-        </div>
+              )}
+            </div>
             <div className="flex flex-wrap gap-3">
-          <button 
-            onClick={startGeneration}
-            disabled={isGenerating}
+              <button
+                onClick={startGeneration}
+                disabled={isGenerating}
                 className="px-6 py-3 rounded-xl bg-black text-white font-semibold hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center gap-2"
-          >
-            {isGenerating && (
+              >
+                {isGenerating && (
                   <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
-            )}
+                )}
                 Generate AI Flow
-          </button>
-          <button
-            onClick={() => setEditOpen(true)}
+              </button>
+              <button
+                onClick={() => setEditOpen(true)}
                 className="px-6 py-3 rounded-xl border-2 border-black text-black font-semibold hover:bg-gray-100 transition-all duration-300"
-          >
-            Edit
-          </button>
+              >
+                Edit
+              </button>
               <button
                 onClick={onOpen}
                 className="px-6 py-3 rounded-xl border-2 border-black text-black font-semibold hover:bg-gray-100 transition-all duration-300"
               >
                 Connect Jira
               </button>
-          <button
-            onClick={() => deleteMutation.mutate()}
+              <button
+                onClick={() => deleteMutation.mutate()}
                 className="px-6 py-3 rounded-xl border-2 border-red-600 text-red-600 font-semibold hover:bg-red-50 transition-all duration-300"
-          >
-            Delete
-          </button>
-        </div>
-      </div>
+              >
+                Delete
+              </button>
+            </div>
+          </div>
         </motion.div>
 
         {/* Main Grid */}
         <div className="grid lg:grid-cols-2 gap-8">
           {/* Left Column */}
           <div className="space-y-8">
-            <motion.div 
+            <motion.div
               initial={{ x: -20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
-            transition={{ delay: 0.1 }}
+              transition={{ delay: 0.1 }}
               className="border-2 border-black rounded-3xl p-6"
             >
               <div className="flex items-center gap-3 mb-6">
@@ -418,13 +419,13 @@ export default function ProjectDetailPage() {
                 </div>
                 <h2 className="text-2xl font-bold text-black">Inputs</h2>
               </div>
-            <InputForm projectId={projectId} />
-            <div className="mt-6">
-              <InputsList projectId={projectId} inputs={inputs} />
-            </div>
+              <InputForm projectId={projectId} />
+              <div className="mt-6">
+                <InputsList projectId={projectId} inputs={inputs} />
+              </div>
             </motion.div>
 
-            <motion.div 
+            <motion.div
               initial={{ x: -20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ delay: 0.2 }}
@@ -436,10 +437,10 @@ export default function ProjectDetailPage() {
                 </div>
                 <h2 className="text-2xl font-bold text-black">Voice Input</h2>
               </div>
-            <VoiceRecorder projectId={projectId} />
+              <VoiceRecorder projectId={projectId} />
             </motion.div>
 
-            <motion.div 
+            <motion.div
               initial={{ x: -20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ delay: 0.3 }}
@@ -451,67 +452,67 @@ export default function ProjectDetailPage() {
                 </div>
                 <h2 className="text-2xl font-bold text-black">Artifacts</h2>
               </div>
-            <ArtifactEditor 
-              projectId={projectId} 
-              artifacts={{
-                ...artifacts,
-                userStories: streamStories.length > 0 ? streamStories.map((story, idx) => ({ id: idx + 1, content: story })) : artifacts?.userStories || []
-              }}
-              isLoading={artifactsLoading}
-            />
+              <ArtifactEditor
+                projectId={projectId}
+                artifacts={{
+                  ...artifacts,
+                  userStories: streamStories.length > 0 ? streamStories.map((story, idx) => ({ id: idx + 1, content: story })) : artifacts?.userStories || []
+                }}
+                isLoading={artifactsLoading}
+              />
             </motion.div>
-        </div>
+          </div>
 
           {/* Right Column */}
           <div className="space-y-8">
-        <motion.div 
-            initial={{ x: 20, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            className="border-2 border-black rounded-3xl p-6"
-          >
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-black flex items-center justify-center text-white text-xl font-bold">
-                4
-              </div>
-              <h2 className="text-2xl font-bold text-black">Process Flow</h2>
-            </div>
-            {isGenerating && (
-              <div className="mb-4">
-                <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
-                  <span>Generating AI Flow…</span>
-                  <span>{progressPercent}%</span>
+            <motion.div
+              initial={{ x: 20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.4 }}
+              className="border-2 border-black rounded-3xl p-6"
+            >
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-xl bg-black flex items-center justify-center text-white text-xl font-bold">
+                  4
                 </div>
-                <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div className="h-2 bg-black transition-all" style={{ width: `${progressPercent}%` }} />
-                </div>
+                <h2 className="text-2xl font-bold text-black">Process Flow</h2>
               </div>
-            )}
-            <div className="rounded-2xl border border-gray-300 bg-gray-50 p-4 min-h-[500px]">
-              <FlowChart 
-                initialNodes={generatedFlow?.nodes || artifacts?.flow?.nodes || []} 
-                initialEdges={generatedFlow?.edges || artifacts?.flow?.edges || []} 
-                aiMermaidCode={artifacts?.process?.mermaid}
-                projectId={projectId}
-                onNodeClick={(node) => {
-                  console.log('Node clicked:', node)
-                }} 
-              />
-            </div>
-          {artifacts?.process && (
-            <div className="mt-6">
-              <ProcessFlowCard 
-                steps={artifacts.process.steps || []}
-                textFlow={artifacts.process.textFlow}
-                exampleStory={artifacts.process.exampleStory}
-                mermaidCode={artifacts.process.mermaid}
-              />
-            </div>
-          )}
-        </motion.div>
+              {isGenerating && (
+                <div className="mb-4">
+                  <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
+                    <span>Generating AI Flow…</span>
+                    <span>{progressPercent}%</span>
+                  </div>
+                  <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="h-2 bg-black transition-all" style={{ width: `${progressPercent}%` }} />
+                  </div>
+                </div>
+              )}
+              <div className="rounded-2xl border border-gray-300 bg-gray-50 p-4 min-h-[500px]">
+                <FlowChart
+                  initialNodes={generatedFlow?.nodes || artifacts?.flow?.nodes || []}
+                  initialEdges={generatedFlow?.edges || artifacts?.flow?.edges || []}
+                  aiMermaidCode={artifacts?.process?.mermaid}
+                  projectId={projectId}
+                  onNodeClick={(node) => {
+                    console.log('Node clicked:', node)
+                  }}
+                />
+              </div>
+              {artifacts?.process && (
+                <div className="mt-6">
+                  <ProcessFlowCard
+                    steps={artifacts.process.steps || []}
+                    textFlow={artifacts.process.textFlow}
+                    exampleStory={artifacts.process.exampleStory}
+                    mermaidCode={artifacts.process.mermaid}
+                  />
+                </div>
+              )}
+            </motion.div>
 
             {/* AI Chatbot Section */}
-            <motion.div 
+            <motion.div
               initial={{ x: 20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ delay: 0.5 }}
@@ -526,14 +527,14 @@ export default function ProjectDetailPage() {
                   <p className="text-sm text-gray-600">Ask questions about your project</p>
                 </div>
               </div>
-              <Chatbot 
-                projectId={projectId} 
+              <Chatbot
+                projectId={projectId}
                 placeholder="Ask me anything about flows, user stories, or requirements..."
               />
             </motion.div>
 
             {/* Quick Tools */}
-            <motion.div 
+            <motion.div
               initial={{ x: 20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ delay: 0.55 }}
@@ -564,59 +565,59 @@ export default function ProjectDetailPage() {
         <ModalOverlay backdropFilter="blur(4px)" bg="blackAlpha.600" />
         <ModalContent borderRadius="2xl" border="2px solid black">
           <ModalHeader className="text-2xl font-bold border-b-2 border-black">Edit Project</ModalHeader>
-            <ModalCloseButton />
-            <ModalBody pb={6}>
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault()
-                  updateMutation.mutate({
-                    name: editForm.name?.trim() || project?.name,
-                    description: editForm.description ?? ''
-                  }, {
-                    onSuccess: () => setEditOpen(false)
-                  })
-                }}
+          <ModalCloseButton />
+          <ModalBody pb={6}>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                updateMutation.mutate({
+                  name: editForm.name?.trim() || project?.name,
+                  description: editForm.description ?? ''
+                }, {
+                  onSuccess: () => setEditOpen(false)
+                })
+              }}
               className="space-y-6"
-              >
-                <div>
+            >
+              <div>
                 <label className="block text-sm font-bold text-black mb-2">Project Name</label>
-                  <input
-                    type="text"
-                    value={editForm.name}
-                    onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+                <input
+                  type="text"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
                   className="w-full px-4 py-3 border-2 border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-black transition-all"
-                    required
-                  />
-                </div>
-                <div>
+                  required
+                />
+              </div>
+              <div>
                 <label className="block text-sm font-bold text-black mb-2">Description</label>
-                  <textarea
+                <textarea
                   rows={4}
-                    value={editForm.description}
-                    onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
+                  value={editForm.description}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
                   className="w-full px-4 py-3 border-2 border-black rounded-xl focus:outline-none focus:ring-2 focus:ring-black transition-all resize-none"
-                  />
-                </div>
+                />
+              </div>
               <div className="flex justify-end gap-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => setEditOpen(false)}
+                <button
+                  type="button"
+                  onClick={() => setEditOpen(false)}
                   className="px-6 py-3 text-black border-2 border-black rounded-xl font-semibold hover:bg-gray-100 transition-all"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={updateMutation.isPending}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={updateMutation.isPending}
                   className="px-6 py-3 bg-black text-white rounded-xl font-semibold hover:bg-gray-800 disabled:opacity-50 transition-all"
-                  >
+                >
                   {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
-                  </button>
-                </div>
-              </form>
-            </ModalBody>
-          </ModalContent>
-        </Modal>
+                </button>
+              </div>
+            </form>
+          </ModalBody>
+        </ModalContent>
+      </Modal>
 
       {/* Jira Modal */}
       <Modal isOpen={isOpen} onClose={onClose} size="lg">
@@ -637,7 +638,7 @@ export default function ProjectDetailPage() {
                   required
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-bold text-black mb-2">API Key</label>
                 <input
@@ -649,7 +650,7 @@ export default function ProjectDetailPage() {
                   required
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-bold text-black mb-2">Project Key</label>
                 <input
@@ -661,7 +662,7 @@ export default function ProjectDetailPage() {
                   required
                 />
               </div>
-              
+
               <div className="flex justify-end gap-3 pt-4">
                 <button
                   type="button"

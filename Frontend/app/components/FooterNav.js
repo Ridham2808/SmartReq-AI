@@ -2,6 +2,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/hooks/useAuth'
+import Icon from '@/Icon.png'
 
 export default function FooterNav() {
   const router = useRouter()
@@ -10,11 +11,9 @@ export default function FooterNav() {
     <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50">
       <div className="bg-zinc-800 rounded-2xl px-3 py-3 shadow-2xl">
         <div className="flex items-center gap-2">
-          <div className="bg-zinc-700 rounded-xl px-4 py-3">
-            <Link href="/" className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-              <span className="text-black text-lg font-bold">W.</span>
-            </Link>
-          </div>
+          <Link href="/" className="flex items-center justify-center p-2">
+            <img src={Icon?.src || Icon} alt="SmartReq AI" className="w-12 h-12 object-contain" />
+          </Link>
 
           <div className="bg-zinc-700 rounded-xl px-4 py-3">
             <Link href="/" className="text-white text-sm font-medium hover:text-gray-300 transition-colors whitespace-nowrap">

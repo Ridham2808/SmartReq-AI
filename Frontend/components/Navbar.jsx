@@ -1,5 +1,6 @@
 'use client'
 import Link from 'next/link'
+import logo from '@/Logo.png'
 import { usePathname, useRouter } from 'next/navigation'
 import { MdLogin, MdLogout, MdDashboard, MdHome, MdMenu, MdClose } from 'react-icons/md'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -16,7 +17,9 @@ export default function Navbar() {
     <nav className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-50">
       <div className="flex items-center justify-between max-w-screen-2xl mx-auto">
         {/* Logo */}
-        <Link href="/" className="text-2xl sm:text-3xl font-bold text-black">W.</Link>
+        <Link href="/" className="inline-flex items-center">
+          <img src={logo?.src || '/Logo.png'} alt="SmartReq AI" className="h-8 sm:h-9 w-auto" />
+        </Link>
 
         {/* Desktop Navigation (match Header) */}
         <div className="hidden md:flex items-center gap-6 text-sm">
