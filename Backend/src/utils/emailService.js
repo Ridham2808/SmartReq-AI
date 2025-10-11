@@ -1,7 +1,6 @@
-import sgMail from '@sendgrid/mail'
-import Mailgun from 'mailgun.js'
-import FormData from 'form-data'
-import { config } from '../config/env.js'
+const { logger } = require('../middleware/errorHandler');
+const sgMail = require('@sendgrid/mail');
+const config = require('../config/env');
 
 // Generate unique verification code
 const generateVerificationCode = () => {
@@ -10,7 +9,7 @@ const generateVerificationCode = () => {
 };
 
 // Send verification email via SendGrid
-export const sendVerificationEmail = async (email, name, verificationCode) => {
+const sendVerificationEmail = async (email, name, verificationCode) => {
   try {
     const apiKey = process.env.SENDGRID_API_KEY;
     const sender = process.env.SENDER_EMAIL || config.EMAIL_FROM;
@@ -57,7 +56,7 @@ export const sendVerificationEmail = async (email, name, verificationCode) => {
                           </span>
             </div>
                         <p style="margin:0 0 8px 0;font-size:13px;color:#666;">This code expires in 24 hours.</p>
-                        <p style="margin:0;font-size:12px;color:#999;">If you didn't request this, you can ignore this email.</p>
+                        <p style="margin:0;font-size:12px;color:#999;">If you didn’t request this, you can ignore this email.</p>
                       </td>
                     </tr>
                     <tr>
@@ -76,16 +75,16 @@ export const sendVerificationEmail = async (email, name, verificationCode) => {
     };
 
     const [response] = await sgMail.send(msg);
-    console.log(`Verification email sent to ${email} via SendGrid (inline HTML). Status: ${response.statusCode}`);
+    logger.info(`Verification email sent to ${email} via SendGrid (inline HTML). Status: ${response.statusCode}`);
     return { success: true, provider: 'SendGrid', statusCode: response.statusCode };
   } catch (error) {
-    console.error(`Failed to send verification email to ${email}:`, error.message);
+    logger.error(`Failed to send verification email to ${email}:`, error.message);
     throw new Error(`Failed to send verification email: ${error.message}`);
   }
 };
 
 // Send password reset email via SendGrid (inline HTML)
-export const sendPasswordResetEmail = async (email, name, resetCode) => {
+const sendPasswordResetEmail = async (email, name, resetCode) => {
   try {
     const apiKey = process.env.SENDGRID_API_KEY;
     const sender = process.env.SENDER_EMAIL || config.EMAIL_FROM;
@@ -130,7 +129,7 @@ export const sendPasswordResetEmail = async (email, name, resetCode) => {
                           <span style=\"display:inline-block;font-size:30px;letter-spacing:6px;font-family:Courier New,monospace;font-weight:700;color:#e74c3c;\">${resetCode}</span>
                         </div>
                         <p style=\"margin:0 0 8px 0;font-size:13px;color:#666;\">This code expires in 1 hour.</p>
-                        <p style=\"margin:0;font-size:12px;color:#999;\">If you didn't request this, you can ignore this email.</p>
+                        <p style=\"margin:0;font-size:12px;color:#999;\">If you didn’t request this, you can ignore this email.</p>
                       </td>
                     </tr>
                     <tr>
@@ -149,16 +148,16 @@ export const sendPasswordResetEmail = async (email, name, resetCode) => {
     };
 
     const [response] = await sgMail.send(msg);
-    console.log(`Password reset email sent to ${email} via SendGrid (inline HTML). Status: ${response.statusCode}`);
+    logger.info(`Password reset email sent to ${email} via SendGrid (inline HTML). Status: ${response.statusCode}`);
     return { success: true, provider: 'SendGrid', statusCode: response.statusCode };
   } catch (error) {
-    console.error(`Failed to send password reset email to ${email}:`, error.message);
+    logger.error(`Failed to send password reset email to ${email}:`, error.message);
     throw new Error(`Failed to send password reset email: ${error.message}`);
   }
 };
 
 // Check email service health
-export const checkEmailServiceHealth = async () => {
+const checkEmailServiceHealth = async () => {
   try {
     const mailgun = new Mailgun(FormData);
     const mg = mailgun.client({
@@ -176,7 +175,7 @@ export const checkEmailServiceHealth = async () => {
       note: 'Sandbox domain - recipients must be authorized'
     };
   } catch (error) {
-    console.error('Email service health check failed:', error.message);
+    logger.error('Email service health check failed:', error.message);
     return {
       status: 'unhealthy',
       message: 'Email service unavailable',
@@ -186,7 +185,7 @@ export const checkEmailServiceHealth = async () => {
 };
 
 // Test email configuration
-export const testEmailConfiguration = async () => {
+const testEmailConfiguration = async () => {
   try {
     const mailgun = new Mailgun(FormData);
     const mg = mailgun.client({
@@ -210,9 +209,15 @@ export const testEmailConfiguration = async () => {
       messageId: data.id
     };
   } catch (error) {
-    console.error('Mailgun configuration test failed:', error.message);
+    logger.error('Mailgun configuration test failed:', error.message);
     return { success: false, error: error.message };
   }
 };
 
-export { generateVerificationCode };
+module.exports = {
+  generateVerificationCode,
+  sendVerificationEmail,
+  sendPasswordResetEmail,
+  testEmailConfiguration,
+  checkEmailServiceHealth
+};
