@@ -1,5 +1,7 @@
 import { Router } from 'express'
 import { authenticateToken } from '../middleware/auth.js'
+import { createInput, getInputs, getInput, deleteInput } from '../controllers/inputs.js'
+import { uploadMiddleware } from '../utils/fileUtils.js'
 
 const router = Router()
 
@@ -7,42 +9,15 @@ const router = Router()
 router.use(authenticateToken)
 
 // POST /api/projects/:projectId/inputs
-router.post('/:projectId/inputs', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Create input (to be implemented)',
-    projectId: req.params.projectId
-  })
-})
+router.post('/:projectId/inputs', uploadMiddleware, createInput)
 
 // GET /api/projects/:projectId/inputs
-router.get('/:projectId/inputs', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Get all inputs (to be implemented)',
-    projectId: req.params.projectId,
-    data: []
-  })
-})
+router.get('/:projectId/inputs', getInputs)
 
 // GET /api/projects/:projectId/inputs/:inputId
-router.get('/:projectId/inputs/:inputId', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Get input by ID (to be implemented)',
-    projectId: req.params.projectId,
-    inputId: req.params.inputId
-  })
-})
+router.get('/:projectId/inputs/:inputId', getInput)
 
 // DELETE /api/projects/:projectId/inputs/:inputId
-router.delete('/:projectId/inputs/:inputId', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Delete input (to be implemented)',
-    projectId: req.params.projectId,
-    inputId: req.params.inputId
-  })
-})
+router.delete('/:projectId/inputs/:inputId', deleteInput)
 
 export default router
