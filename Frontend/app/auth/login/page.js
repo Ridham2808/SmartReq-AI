@@ -7,6 +7,7 @@ import { api, endpoints } from '@/lib/api'
 import { useAuthStore } from '@/hooks/useAuth'
 import { useRouter, usePathname } from 'next/navigation'
 import { Eye, EyeOff, Mail, Lock, CheckCircle, XCircle, ArrowLeft } from 'lucide-react'
+import logo from '@/Logo.png'
 
 const schema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -85,20 +86,7 @@ export default function LoginPage() {
         <div className="w-full md:w-1/2 bg-gray-50 p-10 sm:p-12 flex flex-col items-center justify-center relative">
           <h2 className="text-2xl font-normal text-gray-800 mb-12">Welcome!</h2>
           <div className="flex items-center gap-4 mb-12">
-            <div className="text-6xl sm:text-7xl font-bold text-black">W.</div>
-            <div className="relative">
-              <div className="w-20 sm:w-24 h-20 sm:h-24 rounded-full bg-gradient-to-br from-emerald-300 to-emerald-200 flex items-center justify-center">
-                <div className="w-16 sm:w-20 h-16 sm:h-20 rounded-full bg-white border-4 border-blue-600 flex items-center justify-center">
-                  <div className="text-3xl sm:text-4xl">
-                    <div className="flex gap-2 mb-1">
-                      <div className="w-2 h-2 bg-blue-600 rounded-full" />
-                      <div className="w-2 h-2 bg-blue-600 rounded-full" />
-                    </div>
-                    <div className="w-10 sm:w-12 h-3 border-b-4 border-blue-600 rounded-b-full" />
-                  </div>
-                </div>
-              </div>
-            </div>
+            <img src={logo?.src || '/Logo.png'} alt="SmartReq AI" className="h-16 sm:h-20 w-auto" />
           </div>
           <p className="text-sm text-gray-600">
             Not a member yet? <a href="/auth/register" className="text-black font-medium underline hover:no-underline">Register now</a>

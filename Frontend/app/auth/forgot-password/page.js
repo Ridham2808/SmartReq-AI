@@ -7,20 +7,21 @@ import { api, endpoints } from '@/lib/api'
 import { useRouter, usePathname } from 'next/navigation'
 import { useAuthStore } from '@/hooks/useAuth'
 import { Mail, CheckCircle, XCircle, Loader2, ArrowLeft } from 'lucide-react'
+import logo from '@/Logo.png'
 
 const schema = z.object({
   email: z.string().email('Please enter a valid email address')
 })
 
-export default function ForgotPasswordPage(){
+export default function ForgotPasswordPage() {
   const router = useRouter()
   const pathname = usePathname()
   const token = useAuthStore ? useAuthStore(s => s.token) : null
   const [apiError, setApiError] = useState('')
   const [resetSuccess, setResetSuccess] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  
-  const { register, handleSubmit, formState: { errors } } = useForm({ 
+
+  const { register, handleSubmit, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
     defaultValues: { email: '' }
   })
@@ -82,6 +83,9 @@ export default function ForgotPasswordPage(){
           <span className="text-sm">Back</span>
         </button>
         <div className="p-8 sm:p-10">
+          <div className="flex items-center gap-3 mb-6">
+            <img src={logo?.src || '/Logo.png'} alt="SmartReq AI" className="h-10 w-auto" />
+          </div>
           <h1 className="text-2xl font-normal text-gray-800 mb-2">Forgot Password</h1>
           <p className="text-sm text-gray-600 mb-6">Enter your email to receive the reset code</p>
 
