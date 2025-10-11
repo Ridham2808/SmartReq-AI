@@ -1,10 +1,10 @@
-import prisma from '../config/db.js'
-import { asyncHandler } from '../middleware/errorHandler.js'
-import { processProjectInputs } from '../utils/nlp.js'
-import { generateArtifactsFromText } from '../utils/llm.js'
-import { buildCombinedTextFromInputs } from '../utils/inputProcessor.js'
-import { extractTextFromFile, stripPII, chunkText } from '../utils/textExtractor.js'
-import config from '../config/env.js'
+const prisma = require('../config/db');
+const { asyncHandler } = require('../middleware/errorHandler');
+const { processProjectInputs } = require('../utils/nlp');
+const { generateArtifactsFromText } = require('../utils/llm');
+const { buildCombinedTextFromInputs } = require('../utils/inputProcessor');
+const { extractTextFromFile, stripPII, chunkText } = require('../utils/textExtractor');
+const config = require('../config/env');
 
 /**
  * Ensure flow has minimum number of nodes (AI-driven expansion)
@@ -103,7 +103,7 @@ function ensureMinimumFlowNodes(flow, minNodes = 20) {
  * Generate artifacts from project inputs
  * POST /api/projects/:projectId/generate
  */
-export const generateArtifacts = asyncHandler(async (req, res) => {
+const generateArtifacts = asyncHandler(async (req, res) => {
   console.log('=== GENERATE REQUEST START ===')
   console.log('ProjectId:', req.params.projectId)
   console.log('Body:', req.body)
@@ -370,7 +370,7 @@ export const generateArtifacts = asyncHandler(async (req, res) => {
  * Get generation status/history for a project
  * GET /api/projects/:projectId/generate/status
  */
-export const getGenerationStatus = asyncHandler(async (req, res) => {
+const getGenerationStatus = asyncHandler(async (req, res) => {
   const { projectId } = req.params;
   const userId = req.user.id;
 
@@ -425,3 +425,8 @@ export const getGenerationStatus = asyncHandler(async (req, res) => {
     }
   });
 });
+
+module.exports = {
+  generateArtifacts,
+  getGenerationStatus
+};
