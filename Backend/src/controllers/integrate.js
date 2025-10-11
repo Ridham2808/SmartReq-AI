@@ -36,7 +36,7 @@ const decrypt = (encryptedText, secretKey) => {
  * Sync artifacts to Jira
  * POST /api/projects/:projectId/integrate/jira
  */
-export const syncToJira = asyncHandler(async (req, res) => {
+const syncToJira = asyncHandler(async (req, res) => {
   if (!config.JIRA_ENABLED) {
     return res.status(400).json({
       success: false,
@@ -196,7 +196,7 @@ export const syncToJira = asyncHandler(async (req, res) => {
  * Test Jira connection
  * POST /api/projects/:projectId/integrate/jira/test
  */
-export const testJiraConnection = asyncHandler(async (req, res) => {
+const testJiraConnection = asyncHandler(async (req, res) => {
   if (!config.JIRA_ENABLED) {
     return res.status(400).json({
       success: false,
@@ -243,7 +243,7 @@ export const testJiraConnection = asyncHandler(async (req, res) => {
  * Get integration status
  * GET /api/projects/:projectId/integrate/status
  */
-export const getIntegrationStatus = asyncHandler(async (req, res) => {
+const getIntegrationStatus = asyncHandler(async (req, res) => {
   if (!config.JIRA_ENABLED) {
     return res.json({
       success: true,

@@ -1,12 +1,12 @@
-import prisma from '../config/db.js'
-import { asyncHandler } from '../middleware/errorHandler.js'
-import { processUploadedFile, deleteFile } from '../utils/fileUtils.js'
+const prisma = require('../config/db');
+const { asyncHandler } = require('../middleware/errorHandler');
+const { processUploadedFile, deleteFile } = require('../utils/fileUtils');
 
 /**
  * Create a new input
  * POST /api/projects/:projectId/inputs
  */
-export const createInput = asyncHandler(async (req, res) => {
+const createInput = asyncHandler(async (req, res) => {
   const { projectId } = req.params;
   const { type, content } = req.body;
   const userId = req.user.id;
@@ -66,7 +66,7 @@ export const createInput = asyncHandler(async (req, res) => {
  * Get all inputs for a project
  * GET /api/projects/:projectId/inputs
  */
-export const getInputs = asyncHandler(async (req, res) => {
+const getInputs = asyncHandler(async (req, res) => {
   const { projectId } = req.params;
   const { type, page = 1, limit = 10 } = req.query;
   const userId = req.user.id;
@@ -134,7 +134,7 @@ export const getInputs = asyncHandler(async (req, res) => {
  * Get input by ID
  * GET /api/projects/:projectId/inputs/:inputId
  */
-export const getInput = asyncHandler(async (req, res) => {
+const getInput = asyncHandler(async (req, res) => {
   const { projectId, inputId } = req.params;
   const userId = req.user.id;
 
@@ -185,7 +185,7 @@ export const getInput = asyncHandler(async (req, res) => {
  * Delete input
  * DELETE /api/projects/:projectId/inputs/:inputId
  */
-export const deleteInput = asyncHandler(async (req, res) => {
+const deleteInput = asyncHandler(async (req, res) => {
   const { projectId, inputId } = req.params;
   const userId = req.user.id;
 
@@ -231,3 +231,10 @@ export const deleteInput = asyncHandler(async (req, res) => {
 
   res.status(204).send();
 });
+
+module.exports = {
+  createInput,
+  getInputs,
+  getInput,
+  deleteInput
+};
