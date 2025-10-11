@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { authenticateToken } from '../middleware/auth.js'
+import { generateArtifacts, getGenerationStatus } from '../controllers/generate.js'
 
 const router = Router()
 
@@ -7,22 +8,9 @@ const router = Router()
 router.use(authenticateToken)
 
 // POST /api/projects/:projectId/generate
-router.post('/:projectId/generate', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Generate artifacts (to be implemented)',
-    projectId: req.params.projectId
-  })
-})
+router.post('/:projectId/generate', generateArtifacts)
 
 // GET /api/projects/:projectId/generate/status
-router.get('/:projectId/generate/status', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Get generation status (to be implemented)',
-    projectId: req.params.projectId,
-    status: 'idle'
-  })
-})
+router.get('/:projectId/generate/status', getGenerationStatus)
 
 export default router

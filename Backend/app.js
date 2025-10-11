@@ -8,6 +8,7 @@ import { router as healthRouter } from './src/routes/health.js'
 import apiRouter from './src/routes/index.js'
 import { errorHandler, notFound } from './src/middleware/errorHandler.js'
 import prisma from './src/config/db.js'
+import { ensureUploadDir } from './src/utils/fileUtils.js'
 
 const app = express()
 
@@ -57,6 +58,7 @@ const checkDatabaseConnection = async () => {
 // Start server
 const startServer = async () => {
   await checkDatabaseConnection()
+  await ensureUploadDir()
   
   app.listen(config.PORT, () => {
     console.log(`🚀 Backend listening on :${config.PORT}`)

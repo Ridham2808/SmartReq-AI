@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { authenticateToken } from '../middleware/auth.js'
+import { syncToJira, testJiraConnection, getIntegrationStatus } from '../controllers/integrate.js'
 
 const router = Router()
 
@@ -7,31 +8,12 @@ const router = Router()
 router.use(authenticateToken)
 
 // POST /api/projects/:projectId/integrate/jira
-router.post('/:projectId/integrate/jira', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Sync to Jira (to be implemented)',
-    projectId: req.params.projectId
-  })
-})
+router.post('/:projectId/integrate/jira', syncToJira)
 
 // POST /api/projects/:projectId/integrate/jira/test
-router.post('/:projectId/integrate/jira/test', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Test Jira connection (to be implemented)',
-    projectId: req.params.projectId
-  })
-})
+router.post('/:projectId/integrate/jira/test', testJiraConnection)
 
 // GET /api/projects/:projectId/integrate/status
-router.get('/:projectId/integrate/status', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Get integration status (to be implemented)',
-    projectId: req.params.projectId,
-    status: 'not_configured'
-  })
-})
+router.get('/:projectId/integrate/status', getIntegrationStatus)
 
 export default router
