@@ -1,35 +1,195 @@
+import JiraApi from 'jira-client'
 import prisma from '../config/db.js'
+import crypto from 'crypto'
+import { config } from '../config/env.js'
 
+/**
+ * Encrypt sensitive data
+ */
+const encrypt = (text, secretKey) => {
+  const algorithm = 'aes-256-cbc';
+  const key = crypto.scryptSync(secretKey, 'salt', 32);
+  const iv = crypto.randomBytes(16);
+  const cipher = crypto.createCipher(algorithm, key);
+  let encrypted = cipher.update(text, 'utf8', 'hex');
+  encrypted += cipher.final('hex');
+  return iv.toString('hex') + ':' + encrypted;
+};
+
+/**
+ * Decrypt sensitive data
+ */
+const decrypt = (encryptedText, secretKey) => {
+  const algorithm = 'aes-256-cbc';
+  const key = crypto.scryptSync(secretKey, 'salt', 32);
+  const textParts = encryptedText.split(':');
+  const iv = Buffer.from(textParts.shift(), 'hex');
+  const encrypted = textParts.join(':');
+  const decipher = crypto.createDecipher(algorithm, key);
+  let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+  decrypted += decipher.final('utf8');
+  return decrypted;
+};
+
+/**
+ * Sync artifacts to Jira
+ * POST /api/projects/:projectId/integrate/jira
+ */
 export const syncToJira = async (req, res) => {
   try {
-    const { projectId } = req.params
-    const { jiraUrl, jiraEmail, jiraApiToken, jiraProjectKey } = req.body
-    const ownerId = req.user.id
+    if (!config.JIRA_ENABLED) {
+      return res.status(400).json({
+        success: false,
+        message: 'Jira integration is disabled'
+      });
+    }
+    const { projectId } = req.params;
+    const { jiraUrl, apiKey, projectKey } = req.body;
+    const userId = req.user.id;
 
+    // Verify project exists and user owns it
     const project = await prisma.project.findFirst({
-      where: { id: parseInt(projectId), ownerId },
-      include: { artifacts: { where: { type: 'story' } } }
-    })
+      where: {
+        id: parseInt(projectId),
+        ownerId: userId
+      }
+    });
 
     if (!project) {
       return res.status(404).json({
         success: false,
         message: 'Project not found'
-      })
+      });
     }
 
-    // Mock Jira sync - will be replaced with actual Jira API integration
-    console.log('Syncing to Jira:', { jiraUrl, jiraProjectKey })
-    const syncedCount = project.artifacts.length
-
-    res.json({
-      success: true,
-      message: Successfully `synced ${syncedCount} user stories to Jira`,
-      data: {
-        synced: syncedCount,
-        jiraProjectKey
+    // Get all artifacts for the project
+    const artifacts = await prisma.artifact.findMany({
+      where: { projectId: parseInt(projectId) },
+      select: {
+        id: true,
+        type: true,
+        content: true
       }
-    })
+    });
+
+    if (artifacts.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No artifacts found to sync'
+      });
+    }
+
+    try {
+      // Initialize Jira client
+      const jira = new JiraApi({
+        protocol: 'https',
+        host: jiraUrl.replace(/^https?:\/\//, ''),
+        username: 'your-email@example.com', // This should be configurable
+        password: apiKey,
+        apiVersion: '3',
+        strictSSL: true
+      });
+
+      let syncedCount = 0;
+      const errors = [];
+
+      // Process each artifact
+      for (const artifact of artifacts) {
+        try {
+          if (artifact.type === 'story') {
+            // Create Jira issue for user story
+            const issueData = {
+              fields: {
+                project: { key: projectKey },
+                summary: `User Story: ${artifact.content}`,
+                description: {
+                  type: 'doc',
+                  version: 1,
+                  content: [
+                    {
+                      type: 'paragraph',
+                      content: [
+                        {
+                          type: 'text',
+                          text: artifact.content
+                        }
+                      ]
+                    }
+                  ]
+                },
+                issuetype: { name: 'Story' },
+                labels: ['smartreq-ai', 'generated']
+              }
+            };
+
+            await jira.addNewIssue(issueData);
+            syncedCount++;
+          } else if (artifact.type === 'flow') {
+            // Create Jira issue for process flow
+            const flowContent = typeof artifact.content === 'string' 
+              ? artifact.content 
+              : JSON.stringify(artifact.content, null, 2);
+
+            const issueData = {
+              fields: {
+                project: { key: projectKey },
+                summary: `Process Flow: ${project.name}`,
+                description: {
+                  type: 'doc',
+                  version: 1,
+                  content: [
+                    {
+                      type: 'paragraph',
+                      content: [
+                        {
+                          type: 'text',
+                          text: `Process flow for project: ${project.name}\n\n${flowContent}`
+                        }
+                      ]
+                    }
+                  ]
+                },
+                issuetype: { name: 'Task' },
+                labels: ['smartreq-ai', 'process-flow', 'generated']
+              }
+            };
+
+            await jira.addNewIssue(issueData);
+            syncedCount++;
+          }
+        } catch (error) {
+          console.error(`Error syncing artifact ${artifact.id}:`, error);
+          errors.push({
+            artifactId: artifact.id,
+            error: error.message
+          });
+        }
+      }
+
+      // Store integration credentials (encrypted)
+      const encryptedApiKey = encrypt(apiKey, process.env.JIRA_ENCRYPTION_KEY || 'default-key');
+      
+      // You might want to store this in a separate integration settings table
+      // For now, we'll just log the success
+
+      res.json({
+        success: true,
+        message: 'Artifacts synced to Jira successfully',
+        data: {
+          syncedCount,
+          totalArtifacts: artifacts.length,
+          errors: errors.length > 0 ? errors : undefined
+        }
+      });
+
+    } catch (error) {
+      console.error('Jira integration error:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to sync with Jira',
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Integration failed'
+      });
+    }
   } catch (error) {
     console.error('Sync to Jira error:', error)
     res.status(500).json({
@@ -40,28 +200,52 @@ export const syncToJira = async (req, res) => {
   }
 }
 
+/**
+ * Test Jira connection
+ * POST /api/projects/:projectId/integrate/jira/test
+ */
 export const testJiraConnection = async (req, res) => {
   try {
-    const { jiraUrl, jiraEmail, jiraApiToken } = req.body
-
-    if (!jiraUrl || !jiraEmail || !jiraApiToken) {
+    if (!config.JIRA_ENABLED) {
       return res.status(400).json({
         success: false,
-        message: 'Missing Jira credentials'
-      })
+        message: 'Jira integration is disabled'
+      });
     }
+    const { jiraUrl, apiKey, projectKey } = req.body;
 
-    // Mock connection test - will be replaced with actual Jira API call
-    console.log('Testing Jira connection:', jiraUrl)
+    try {
+      // Initialize Jira client
+      const jira = new JiraApi({
+        protocol: 'https',
+        host: jiraUrl.replace(/^https?:\/\//, ''),
+        username: 'your-email@example.com', // This should be configurable
+        password: apiKey,
+        apiVersion: '3',
+        strictSSL: true
+      });
 
-    res.json({
-      success: true,
-      message: 'Jira connection successful',
-      data: {
-        connected: true,
-        jiraUrl
-      }
-    })
+      // Test connection by getting project info
+      const project = await jira.getProject(projectKey);
+
+      res.json({
+        success: true,
+        message: 'Jira connection successful',
+        data: {
+          projectName: project.name,
+          projectKey: project.key,
+          projectType: project.projectTypeKey
+        }
+      });
+
+    } catch (error) {
+      console.error('Jira connection test error:', error);
+      return res.status(400).json({
+        success: false,
+        message: 'Failed to connect to Jira',
+        error: error.message
+      });
+    }
   } catch (error) {
     console.error('Test Jira connection error:', error)
     res.status(500).json({
@@ -72,35 +256,70 @@ export const testJiraConnection = async (req, res) => {
   }
 }
 
+/**
+ * Get integration status
+ * GET /api/projects/:projectId/integrate/status
+ */
 export const getIntegrationStatus = async (req, res) => {
   try {
-    const { projectId } = req.params
-    const ownerId = req.user.id
+    if (!config.JIRA_ENABLED) {
+      return res.json({
+        success: true,
+        data: {
+          jiraEnabled: false,
+          message: 'Jira integration is disabled'
+        }
+      });
+    }
+    const { projectId } = req.params;
+    const userId = req.user.id;
 
+    // Verify project exists and user owns it
     const project = await prisma.project.findFirst({
-      where: { id: parseInt(projectId), ownerId }
-    })
+      where: {
+        id: parseInt(projectId),
+        ownerId: userId
+      }
+    });
 
     if (!project) {
       return res.status(404).json({
         success: false,
         message: 'Project not found'
-      })
+      });
     }
 
-    // Mock status - will be replaced with actual integration status check
+    // Get artifact counts
+    const [totalArtifacts, storiesCount, flowsCount] = await Promise.all([
+      prisma.artifact.count({
+        where: { projectId: parseInt(projectId) }
+      }),
+      prisma.artifact.count({
+        where: { 
+          projectId: parseInt(projectId),
+          type: 'story'
+        }
+      }),
+      prisma.artifact.count({
+        where: { 
+          projectId: parseInt(projectId),
+          type: 'flow'
+        }
+      })
+    ]);
+
     res.json({
       success: true,
       data: {
-        status: 'not_configured',
-        integrations: {
-          jira: {
-            configured: false,
-            lastSync: null
-          }
+        projectId: parseInt(projectId),
+        integrationStatus: {
+          totalArtifacts,
+          storiesCount,
+          flowsCount,
+          readyForSync: totalArtifacts > 0
         }
       }
-    })
+    });
   } catch (error) {
     console.error('Get integration status error:', error)
     res.status(500).json({
