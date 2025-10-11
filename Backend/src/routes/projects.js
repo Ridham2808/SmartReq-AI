@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { authenticateToken } from '../middleware/auth.js'
 import { createProject, getProjects, getProject, updateProject, deleteProject } from '../controllers/projects.js'
+import { validateRequest, createProjectSchema, updateProjectSchema } from '../middleware/validation.js'
 
 const router = Router()
 
@@ -8,7 +9,7 @@ const router = Router()
 router.use(authenticateToken)
 
 // POST /api/projects
-router.post('/', createProject)
+router.post('/', validateRequest(createProjectSchema), createProject)
 
 // GET /api/projects
 router.get('/', getProjects)
@@ -17,7 +18,7 @@ router.get('/', getProjects)
 router.get('/:id', getProject)
 
 // PUT /api/projects/:id
-router.put('/:id', updateProject)
+router.put('/:id', validateRequest(updateProjectSchema), updateProject)
 
 // DELETE /api/projects/:id
 router.delete('/:id', deleteProject)
