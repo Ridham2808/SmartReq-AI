@@ -1,26 +1,37 @@
-import { Router } from 'express'
-import { authenticateToken } from '../middleware/auth.js'
-import { createProject, getProjects, getProject, updateProject, deleteProject } from '../controllers/projects.js'
-import { validateRequest, createProjectSchema, updateProjectSchema } from '../middleware/validation.js'
-
-const router = Router()
+const express = require('express');
+const router = express.Router();
+const { 
+  createProject, 
+  getProjects, 
+  getProject, 
+  updateProject, 
+  deleteProject 
+} = require('../controllers/projects');
+const { 
+  validate, 
+  validateQuery, 
+  projectSchema, 
+  projectUpdateSchema, 
+  paginationSchema 
+} = require('../middleware/validation');
+const { authenticateToken } = require('../middleware/auth');
 
 // All routes are protected
-router.use(authenticateToken)
+router.use(authenticateToken);
 
 // POST /api/projects
-router.post('/', validateRequest(createProjectSchema), createProject)
+router.post('/', validate(projectSchema), createProject);
 
 // GET /api/projects
-router.get('/', getProjects)
+router.get('/', validateQuery(paginationSchema), getProjects);
 
 // GET /api/projects/:id
-router.get('/:id', getProject)
+router.get('/:id', getProject);
 
 // PUT /api/projects/:id
-router.put('/:id', validateRequest(updateProjectSchema), updateProject)
+router.put('/:id', validate(projectUpdateSchema), updateProject);
 
 // DELETE /api/projects/:id
-router.delete('/:id', deleteProject)
+router.delete('/:id', deleteProject);
 
-export default router
+module.exports = router;

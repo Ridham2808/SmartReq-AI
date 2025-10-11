@@ -1,4 +1,4 @@
-import Joi from 'joi'
+const Joi = require('joi');
 
 // Auth validation schemas
 const registerSchema = Joi.object({
@@ -215,7 +215,7 @@ const paginationSchema = Joi.object({
   search: Joi.string().max(100).allow('').optional()
 });
 
-export {
+module.exports = {
   validate,
   validateQuery,
   registerSchema,
