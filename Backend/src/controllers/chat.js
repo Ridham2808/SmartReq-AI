@@ -1,32 +1,48 @@
-import { chatWithAI } from '../utils/llm.js'
+const { asyncHandler } = require('../middleware/errorHandler');
+const config = require('../config/env');
 
-export const chatHandler = async (req, res) => {
-  try {
-    const { message, context = [] } = req.body
-
-    if (!message) {
-      return res.status(400).json({
-        success: false,
-        message: 'Message is required'
-      })
-    }
-
-    const result = await chatWithAI(message, context)
-
-    res.json({
-      success: true,
-      data: {
-        userMessage: message,
-        aiResponse: result.response,
-        timestamp: new Date().toISOString()
-      }
-    })
-  } catch (error) {
-    console.error('Chat handler error:', error)
-    res.status(500).json({
-      success: false,
-      message: 'Failed to process chat',
-      error: error.message
-    })
+// Minimal OpenAI proxy using fetch to avoid extra deps; respects OPENAI_API_KEY
+async function callOpenAI(messages, { model = (process.env.OPENAI_MODEL || 'gpt-4o-mini'), temperature = 0.2, max_tokens = 400 } = {}) {
+  const apiKey = config.OPENAI_API_KEY;
+  if (!apiKey) throw new Error('OPENAI_API_KEY missing');
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+    body: JSON.stringify({ model, messages, temperature, max_tokens })
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`OpenAI error ${res.status}: ${text}`);
   }
+  const data = await res.json();
+  return data?.choices?.[0]?.message?.content || '';
 }
+
+// POST /api/chat
+// body: { prompt: string, context?: object }
+const chatHandler = asyncHandler(async (req, res) => {
+  const { prompt, context } = req.body || {};
+  if (!prompt || typeof prompt !== 'string') {
+    return res.status(400).json({ success: false, message: 'prompt is required' });
+  }
+
+  // System and user prompts to keep responses concise and helpful for UI
+  const system = 'You are a helpful assistant for SmartReq AI. Keep answers concise, structured, and helpful for building flows and user stories.';
+  const user = context ? `${prompt}\n\nContext:\n${JSON.stringify(context)}` : prompt;
+
+  try {
+    const content = await callOpenAI([
+      { role: 'system', content: system },
+      { role: 'user', content: user }
+    ]);
+    return res.json({ success: true, data: { reply: content } });
+  } catch (e) {
+    // Fast fallback when OpenAI is not configured or errors out
+    const fallback = `Fast mode reply (no external AI):\n- You asked: "${prompt.slice(0, 300)}"\n- Suggestion: Click Generate AI Flow for an auto graph.\n- Tip: Be specific about actors, decisions, and success criteria.`;
+    return res.json({ success: true, data: { reply: fallback, mode: 'fast' } });
+  }
+});
+
+module.exports = { chatHandler };
+
+
