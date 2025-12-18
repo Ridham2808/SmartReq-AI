@@ -14,7 +14,8 @@
 [![React](https://img.shields.io/badge/React-18.3.1-blue.svg)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5.3-blue.svg)](https://www.typescriptlang.org/)
 
-[Live Demo](https://smart-req-ai-wnj9.vercel.app/)
+
+[![▶ Live Demo](https://img.shields.io/badge/▶%20Live%20Demo%20-SmartreqAI-6C5CE7?style=for-the-badge)](https://smart-req-ai-wnj9.vercel.app/)
 
 </div>
 
